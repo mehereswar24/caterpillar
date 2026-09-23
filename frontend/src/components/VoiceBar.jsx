@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mic, MicOff, Waves } from 'lucide-react';
+import { API } from '../api.js';
 
 export default function VoiceBar() {
   const [listening, setListening] = useState(false);

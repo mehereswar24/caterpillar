@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, AlertTriangle, CheckCircle, Clock, ChevronRight, RefreshCw } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 const MACHINES = ['EXC001','EXC002','EXC003','EXC004','EXC005'];
 const URGENCY = {
   critical:{ bar:'bg-red-500',    text:'text-red-400',    border:'border-red-600',    bg:'bg-red-900/20',    badge:'bg-red-900 text-red-300' },

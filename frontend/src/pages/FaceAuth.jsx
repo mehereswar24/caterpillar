@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Shield, ShieldCheck, ShieldX, User, Loader, RefreshCw } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 
 const MACHINES = ['EXC001','EXC002','EXC003','EXC004','EXC005'];
 

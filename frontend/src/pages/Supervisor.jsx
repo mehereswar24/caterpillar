@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, RefreshCw, Users, Shield } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 const HEALTH_COLOR = { good:'text-green-400', warning:'text-orange-400', critical:'text-red-400' };
 const SITE_POS = { EXC001:{x:20,y:30}, EXC002:{x:55,y:20}, EXC003:{x:75,y:50}, EXC004:{x:40,y:65}, EXC005:{x:15,y:70} };
 const SCENES = ['normal_operation','worker_proximity_breach','excessive_idle','seatbelt_violation_moving','slope_instability'];

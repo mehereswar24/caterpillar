@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock, TrendingUp, Loader, ChevronDown } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 
 const DEFAULTS = {
   task_type:'Earth Excavation', task_complexity:'Medium', material_type:'Soil',

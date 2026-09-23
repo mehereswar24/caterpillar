@@ -3,8 +3,9 @@ import { Zap, TrendingUp, AlertTriangle, Clock, Activity } from 'lucide-react';
 import TruckSimulator from '../components/TruckSimulator';
 import VoiceAgent from '../components/VoiceAgent';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 
 export default function Dashboard({ onTelemetryChange }) {
   const [dash, setDash]   = useState(null);

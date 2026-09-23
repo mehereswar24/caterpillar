@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis } from 'recharts';
 import { Activity, Zap, AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 
 const CLASS_META = {
   NORMAL:             { color:'#22c55e', bg:'bg-green-900/20',  border:'border-green-700',  icon:'✅', label:'Normal Operation' },

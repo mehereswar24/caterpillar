@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 
 const SCENES = [
   { id: 'normal_operation',          label: 'Normal',       color: '#22c55e' },

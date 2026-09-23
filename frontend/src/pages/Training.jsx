@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, Lock, Award, ArrowLeft, AlertTriangle, Bot, Loader } from 'lucide-react';
+import { API } from '../api.js';
 
-const API = 'https://caterpillar-stack.onrender.com';
+// API imported below;
 const OPERATOR = 'OP001';
 
 const TYPE_COLORS = { simulation:'bg-blue-900/30 text-blue-300', video:'bg-purple-900/30 text-purple-300', instructor:'bg-green-900/30 text-green-300', quiz:'bg-yellow-900/30 text-yellow-300' };
