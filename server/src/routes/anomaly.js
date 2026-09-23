@@ -1,73 +1,56 @@
 const router = require('express').Router();
-const { scoreAnomaly } = require('../ml/inference');
-const axios = require('axios');
+const { spawnSync } = require('child_process');
+const path = require('path');
+const fs   = require('fs');
 
-const OLLAMA = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const MODEL  = process.env.OLLAMA_TEXT_MODEL || 'qwen2.5:7b';
+const PYTHON    = process.env.PYTHON_PATH || 'python3';
+const MODEL_DIR = path.join(__dirname, '../../../model');
 
-const TEMPLATES = {
-  EXCESSIVE_IDLE:     (d) => `You idled for ${d.IdlingTime} minutes — wastes ~${(d.IdlingTime*0.055).toFixed(1)}L of fuel.`,
-  OVER_REV:           (d) => `Engine RPM ${d.RPM?.toFixed(0)} detected. Sustained over-revving damages internals.`,
-  UNSAFE_SPEED:       (d) => `Speed ${d.SpeedKPH?.toFixed(1)} kph in proximity zone. Max safe speed is 10 kph.`,
-  SEATBELT_VIOLATION: (d) => `Seatbelt unfastened at ${d.SpeedKPH?.toFixed(1)} kph. Fasten before moving.`,
-  COLD_START_ABUSE:   (d) => `High load applied within 2 min of cold start. Allow engine to warm to 60°C first.`,
-  FUEL_ANOMALY:       (d) => `Fuel consumption ${d.FuelUsed?.toFixed(1)}L with no matching task. Possible sensor fault or unauthorised use.`,
-  NORMAL:             ()  => 'Operating conditions are within safe and efficient parameters.',
-};
-
-async function llmExplain(label, data) {
-  const base = (TEMPLATES[label] || (() => `Anomaly: ${label}`))(data);
-  try {
-    const res = await axios.post(`${OLLAMA}/v1/chat/completions`, {
-      model: MODEL,
-      messages: [{ role: 'user', content:
-        `CAT excavator anomaly: ${label}. RPM=${data.RPM?.toFixed(0)}, Idle=${data.IdlingTime}min, Speed=${data.SpeedKPH?.toFixed(1)}kph. One plain sentence — what happened and how to fix it.`
-      }],
-      max_tokens: 80, temperature: 0.2,
-    }, { timeout: 8000 });
-    return res.data.choices[0].message.content.trim();
-  } catch { return base; }
+function runPython(script, payload) {
+  let result = spawnSync(PYTHON, [path.join(MODEL_DIR, script), JSON.stringify(payload)], { encoding: 'utf8', timeout: 30000 });
+  if (result.error || result.status !== 0) {
+    const fb = PYTHON === 'python3' ? 'python' : 'python3';
+    result = spawnSync(fb, [path.join(MODEL_DIR, script), JSON.stringify(payload)], { encoding: 'utf8', timeout: 30000 });
+  }
+  if (result.error) throw result.error;
+  return JSON.parse(result.stdout.trim());
 }
 
-// POST /anomaly/score
-router.post('/score', async (req, res, next) => {
+// POST /api/anomaly/detect
+router.post('/detect', (req, res) => {
+  try { res.json(runPython('predict_anomaly.py', req.body)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/anomaly/scan
+router.get('/scan', (req, res) => {
   try {
-    const result = await scoreAnomaly(req.body);
-    result.explanation = await llmExplain(result.label, req.body);
-    res.json(result);
-  } catch (err) {
-    // Rule-based fallback
-    const d = req.body;
-    let label = 'NORMAL', confidence = 0.95;
-    if (d.IdlingTime > 30)           { label = 'EXCESSIVE_IDLE';     confidence = 0.91; }
-    else if (d.RPM > 2000)           { label = 'OVER_REV';           confidence = 0.88; }
-    else if (d.SpeedKPH > 10)        { label = 'UNSAFE_SPEED';       confidence = 0.85; }
-    else if (d.seatbelt_encoded === 1){ label = 'SEATBELT_VIOLATION'; confidence = 0.93; }
-    res.json({ label, confidence, explanation: (TEMPLATES[label] || TEMPLATES.NORMAL)(d) });
-  }
-});
-
-// GET /anomaly/history
-router.get('/history', (req, res) => {
-  const { operator_id = 'OP001', days = 7 } = req.query;
-  const labels = ['NORMAL','EXCESSIVE_IDLE','OVER_REV','SEATBELT_VIOLATION','UNSAFE_SPEED','COLD_START_ABUSE','FUEL_ANOMALY'];
-  const seed = [...operator_id].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const events = Array.from({ length: Number(days) }, (_, i) => ({
-    day: i + 1,
-    count: (seed * (i + 1)) % 3,
-    label: labels[(seed + i) % labels.length],
-  }));
-  res.json({ operator_id, days: Number(days), events, trend: events.map(e => e.count) });
-});
-
-// GET /anomaly/report
-router.get('/report', (req, res) => {
-  const { machine_id = 'EXC001' } = req.query;
-  res.json({
-    machine_id, summary: 'Weekly anomaly report generated.',
-    total_anomalies: 5,
-    breakdown: { EXCESSIVE_IDLE: 2, SEATBELT_VIOLATION: 1, OVER_REV: 1, FUEL_ANOMALY: 1 },
-  });
+    const dataPath = path.join(MODEL_DIR, 'data', 'machine_logs.csv');
+    if (!fs.existsSync(dataPath)) return res.json({ alerts: [] });
+    const lines   = fs.readFileSync(dataPath, 'utf8').trim().split('\n');
+    const headers = lines[0].split(',');
+    const rows    = lines.slice(-20).map(l => {
+      const vals = l.split(','), obj = {};
+      headers.forEach((h, i) => obj[h.trim()] = vals[i]?.trim());
+      return obj;
+    });
+    const { machine_id } = req.query;
+    const filtered = machine_id ? rows.filter(r => r.machine_id === machine_id) : rows;
+    const alerts = [];
+    for (const row of filtered.slice(0, 5)) {
+      const result = runPython('predict_anomaly.py', {
+        rpm: parseFloat(row.rpm), hydraulic_pressure: parseFloat(row.hydraulic_pressure),
+        temperature_c: parseFloat(row.temperature_c), fuel_level: parseFloat(row.fuel_level),
+        fuel_used_l: parseFloat(row.fuel_used_l), idle_time_min: parseInt(row.idle_time_min),
+        active_time_min: parseInt(row.active_time_min), speed_kph: parseFloat(row.speed_kph),
+        tilt_angle: parseFloat(row.tilt_angle), engine_load_pct: parseFloat(row.engine_load_pct || 70),
+        seatbelt: row.seatbelt, proximity_alert: parseInt(row.proximity_alert || 0),
+        weather: row.weather, ground_condition: row.ground_condition,
+      });
+      if (result.label !== 'NORMAL') alerts.push({ ...result, machine_id: row.machine_id, operator_id: row.operator_id });
+    }
+    res.json({ count: alerts.length, alerts });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

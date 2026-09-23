@@ -1,39 +1,46 @@
 const router = require('express').Router();
-const { predictMaintenance } = require('../ml/inference');
+const { spawnSync } = require('child_process');
+const path = require('path');
 
-// GET /maintenance/status
-router.get('/status', async (req, res) => {
-  const { machine_id = 'EXC001' } = req.query;
-  // Deterministic demo telemetry per machine
-  const seed = [...machine_id].reduce((a,c)=>a+c.charCodeAt(0),0);
-  const data = {
-    EngineHours: 2000 + (seed % 500),
-    LastServiceHours: 1700 + (seed % 300),
-    HydraulicPressure: 210 + (seed % 60),
-    RPM: 1500 + (seed % 200),
-    FuelUsed: 3.5 + (seed % 3),
-    LoadCycles: 60 + (seed % 40),
-    ArmCycles: 180 + (seed % 80),
-  };
-  try {
-    const result = await predictMaintenance(data);
-    res.json({ machine_id, ...result });
-  } catch {
-    const hrs = Math.max(0, 500 - (data.EngineHours - data.LastServiceHours));
-    res.json({ machine_id, hours_until_service: Math.round(hrs), component_at_risk: 'engine',
-      urgency: hrs < 50 ? 'critical' : hrs < 150 ? 'warning' : 'ok',
-      recommendation: `Service due in ~${Math.round(hrs)} hours.` });
+const PYTHON    = process.env.PYTHON_PATH || 'python3';
+const MODEL_DIR = path.join(__dirname, '../../../model');
+
+function runPython(script, payload) {
+  let result = spawnSync(PYTHON, [path.join(MODEL_DIR, script), JSON.stringify(payload)], { encoding: 'utf8', timeout: 30000 });
+  if (result.error || result.status !== 0) {
+    const fb = PYTHON === 'python3' ? 'python' : 'python3';
+    result = spawnSync(fb, [path.join(MODEL_DIR, script), JSON.stringify(payload)], { encoding: 'utf8', timeout: 30000 });
   }
+  if (result.error) throw result.error;
+  return JSON.parse(result.stdout.trim());
+}
+
+// POST /api/maintenance/predict
+router.post('/predict', (req, res) => {
+  try { res.json(runPython('predict_maintenance.py', req.body)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /maintenance/predict
-router.post('/predict', async (req, res) => {
+// GET /api/maintenance/status?machine_id=EXC001
+router.get('/status', (req, res) => {
   try {
-    const result = await predictMaintenance(req.body);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    const payload = {
+      engine_hours:         parseFloat(req.query.engine_hours || 2000),
+      rpm:                  1500,
+      hydraulic_pressure:   200,
+      temperature_c:        82,
+      fuel_level:           70,
+      fuel_used_l:          6,
+      idle_time_min:        15,
+      active_time_min:      55,
+      engine_load_pct:      72,
+      tilt_angle:           2,
+      speed_kph:            3,
+      fault_codes:          req.query.fault_codes || 'NONE',
+    };
+    const result = runPython('predict_maintenance.py', payload);
+    res.json({ machine_id: req.query.machine_id || 'EXC001', ...result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

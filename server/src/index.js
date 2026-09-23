@@ -50,6 +50,8 @@ app.use('/api/safety-alerts', require('./routes/safetyAlerts'));
 app.use('/api/predict',       require('./routes/predict'));
 app.use('/api/training',      require('./routes/training'));
 app.use('/api/alerts',        require('./routes/alerts'));
+app.use('/api/anomaly',       require('./routes/anomaly'));
+app.use('/api/maintenance',   require('./routes/maintenance'));
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({
