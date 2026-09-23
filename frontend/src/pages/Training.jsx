@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, PlayCircle, Award } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = 'http://localhost:5000';
 const TYPE_ICONS = { simulation: '🎮', video: '▶️', quiz: '📝', checklist: '✅' };
 
 export default function Training() {

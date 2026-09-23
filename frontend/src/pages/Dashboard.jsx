@@ -1,91 +1,81 @@
-import React, { useEffect, useState } from 'react';
-import { Clock, Thermometer } from 'lucide-react';
+import React from 'react';
+import { Thermometer, Wind, Zap } from 'lucide-react';
 import VoiceBar from '../components/VoiceBar';
 import TaskCard from '../components/TaskCard';
-import TruckSimulator from '../components/TruckSimulator';
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 
-const API = 'http://localhost:8000';
+const data = [
+  { time: '08:00', efficiency: 82 },
+  { time: '09:00', efficiency: 85 },
+  { time: '10:00', efficiency: 91 },
+  { time: '11:00', efficiency: 88 },
+  { time: '12:00', efficiency: 94 },
+];
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState([]);
-  const [weather, setWeather] = useState('Cloudy, 22°C');
-  const [score, setScore] = useState(null);
-  const [wellness, setWellness] = useState(null);
-
-  useEffect(() => {
-    fetch(`${API}/task/dashboard?operator_id=OP001`)
-      .then(r => r.json())
-      .then(d => { if (d.tasks) setTasks(d.tasks); setWeather(d.weather || 'Cloudy, 22°C'); })
-      .catch(() => setTasks([
-        { id: 1, type: 'Trenching', location: 'Sector 4', status: 'In Progress', eta: '52 min', explanation: 'Wet soil +18m, Cloudy +2m' },
-        { id: 2, type: 'Loading',   location: 'Sector 2', status: 'Scheduled',   eta: '30 min', explanation: 'Dry soil, normal conditions' },
-        { id: 3, type: 'Grading',   location: 'Sector 1', status: 'Pending',     eta: '65 min', explanation: 'Est. after current tasks' },
-      ]));
-
-    fetch(`${API}/operator/score?operator_id=OP001`)
-      .then(r => r.json()).then(setScore).catch(() => {});
-
-    fetch(`${API}/operator/wellness?operator_id=OP001`)
-      .then(r => r.json()).then(setWellness).catch(() => {});
-  }, []);
-
   return (
-    <div className="p-6 flex flex-col gap-6 min-h-full">
-      {/* Header */}
-      <header className="flex justify-between items-center">
+    <div className="p-10 relative h-full flex flex-col">
+      <header className="mb-10 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold">Operator Dashboard</h1>
-          <p className="text-gray-400">Shift #142 · EXC001 · Operator OP001</p>
+          <p className="text-cat-yellow font-semibold tracking-wider text-sm uppercase mb-1">Live Telemetry</p>
+          <h1 className="text-4xl font-light tracking-tight text-white">Machine <span className="font-bold">EXC001</span></h1>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-gray-800 px-4 py-2.5 rounded-lg flex items-center gap-2">
-            <Thermometer className="text-cat-yellow" size={16}/>
-            <span className="text-sm">{weather}</span>
+        <div className="flex gap-4">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
+            <Thermometer className="text-cat-yellow w-5 h-5" />
+            <span className="font-medium text-gray-200">22�C</span>
           </div>
-          {wellness?.break_recommended && (
-            <div className="bg-orange-900/60 border border-orange-500 px-4 py-2.5 rounded-lg flex items-center gap-2">
-              <Clock className="text-orange-400" size={16}/>
-              <span className="text-sm text-orange-300">Break recommended</span>
-            </div>
-          )}
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
+            <Wind className="text-cat-yellow w-5 h-5" />
+            <span className="font-medium text-gray-200">14 km/h</span>
+          </div>
         </div>
       </header>
-
-      {/* Score strip */}
-      {score && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Safety Score',     value: `${score.safety_score}/100`,  color: score.safety_score >= 80 ? 'text-green-400' : 'text-orange-400' },
-            { label: 'Efficiency',       value: `${score.efficiency_score}/100`, color: 'text-blue-400' },
-            { label: 'Idle Mins',        value: `${score.idle_minutes || 22} min`, color: (score.idle_minutes||22) > 30 ? 'text-orange-400' : 'text-gray-300' },
-            { label: 'Proximity Alerts', value: score.proximity_alerts,        color: score.proximity_alerts > 0 ? 'text-red-400' : 'text-gray-300' },
-          ].map(s => (
-            <div key={s.label} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <div className="text-gray-400 text-xs mb-1">{s.label}</div>
-              <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── LIVE TRUCK SIMULATOR ── */}
-      <TruckSimulator />
-
-      {/* Task cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {tasks.map(t => (
-          <TaskCard
-            key={t.id}
-            title={`${t.type} — ${t.location}`}
-            eta={t.eta}
-            shap={t.explanation}
-            status={t.status}
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TaskCard 
+            title="Trenching - Sector 4"
+            eta="52"
+            shap="Wet soil (+18m) � Cloudy (+2m)"
+            status="In Progress"
+            progress={65}
           />
-        ))}
+          <TaskCard 
+            title="Loading - Sector 2"
+            eta="30"
+            shap="Dry soil � Normal load"
+            status="Scheduled"
+            progress={0}
+          />
+        </div>
+        
+        <div className="bg-white/5 border border-white/10 p-6 rounded-3xl shadow-xl flex flex-col">
+          <div className="flex items-center gap-2 mb-6">
+            <Zap className="text-cat-yellow w-5 h-5" />
+            <h3 className="text-lg font-semibold text-gray-200">Fuel Efficiency</h3>
+          </div>
+          <div className="flex-1 min-h-[150px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="colorEff" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FFB81C" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#FFB81C" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Tooltip contentStyle={{backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff'}} itemStyle={{color: '#FFB81C'}} />
+                <Area type="monotone" dataKey="efficiency" stroke="#FFB81C" strokeWidth={3} fillOpacity={1} fill="url(#colorEff)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 text-center">
+            <span className="text-3xl font-light text-white">91</span><span className="text-gray-400 text-sm ml-1">Score</span>
+          </div>
+        </div>
       </div>
 
-      {/* Voice bar */}
-      <div className="mt-auto">
+      <div className="mt-auto mx-auto w-full max-w-4xl pb-6">
         <VoiceBar />
       </div>
     </div>

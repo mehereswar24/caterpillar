@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, AlertTriangle, CheckCircle } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = 'http://localhost:5000';
 const MACHINES = ['EXC001', 'EXC002', 'LDR001', 'LDR002'];
 const URGENCY_COLORS = { ok: 'text-green-400', warning: 'text-orange-400', critical: 'text-red-400' };
 const URGENCY_BORDERS = { ok: 'border-green-700', warning: 'border-orange-500', critical: 'border-red-500' };

@@ -1,124 +1,63 @@
 import React, { useState } from 'react';
-import { Mic, MicOff, Volume2 } from 'lucide-react';
-
-const API = 'http://localhost:8000';
-
-const DEMO_QUERIES = [
-  'how long will this trench take?',
-  'what is my safety score today?',
-  'am I idling too much?',
-  'when is my next service due?',
-  'what is the weather doing?',
-  'start pre-shift check',
-  'log an incident — worker too close',
-];
+import { Mic, MicOff, Waves } from 'lucide-react';
 
 export default function VoiceBar() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
-  const [skillId, setSkillId] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const sendQuery = async (query) => {
-    setTranscript(query);
-    setResponse('');
-    setSkillId('');
-    setLoading(true);
-    try {
-      const r = await fetch(`${API}/voice/respond`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: query, operator_id: 'OP001', machine_id: 'EXC001' }),
-      });
-      const d = await r.json();
-      setResponse(d.speech_text || 'No response.');
-      setSkillId(d.skill_id || '');
-
-      // Browser TTS
-      if ('speechSynthesis' in window && d.speech_text) {
-        const utt = new SpeechSynthesisUtterance(d.speech_text);
-        utt.rate = 1.0; utt.pitch = 1.0;
-        window.speechSynthesis.speak(utt);
-      }
-    } catch {
-      setResponse('Estimated 52 minutes. (offline fallback)');
-    }
-    setLoading(false);
-    setListening(false);
-  };
 
   const toggleMic = async () => {
-    if (listening) { setListening(false); return; }
-
-    // Try Web Speech API
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const rec = new SR();
-      rec.lang = 'en-US';
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
+    if (!listening) {
       setListening(true);
-      setTranscript('Listening…');
-      rec.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        sendQuery(text);
-      };
-      rec.onerror = () => {
+      setTranscript('Listening...');
+      setResponse('');
+      
+      setTimeout(async () => {
+        setTranscript('how long will this trench take?');
+        try {
+          const res = await fetch('http://localhost:5000/voice/respond', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              transcript: 'how long will this trench take?',
+              operator_id: 'OP001',
+              machine_id: 'EXC001'
+            })
+          });
+          const data = await res.json();
+          setResponse(data.speech_text);
+        } catch (e) {
+          setResponse('Estimated 52 minutes. (Mock fallback)');
+        }
         setListening(false);
-        setTranscript('');
-      };
-      rec.start();
+      }, 1500);
     } else {
-      // Cycle through demo queries
-      setListening(true);
-      const q = DEMO_QUERIES[Math.floor(Math.random() * DEMO_QUERIES.length)];
-      await sendQuery(q);
+      setListening(false);
+      setTranscript('');
     }
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-2xl">
-      {/* Demo quick-tap queries */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {DEMO_QUERIES.slice(0, 5).map(q => (
-          <button key={q} onClick={() => sendQuery(q)}
-            className="text-xs bg-gray-700 hover:bg-cat-yellow hover:text-black text-gray-300 px-2.5 py-1 rounded-full transition">
-            {q}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-4">
-        <button onClick={toggleMic}
-          className={`p-4 rounded-full transition ${listening ? 'bg-red-500 animate-pulse' : 'bg-cat-yellow text-black hover:bg-yellow-400'}`}>
-          {listening ? <MicOff size={24} /> : <Mic size={24} />}
-        </button>
-
-        <div className="flex-1 min-w-0">
-          <div className="text-gray-400 text-sm truncate">
-            {transcript || 'Say "Hey CAT" or tap a query above'}
-          </div>
-          {skillId && (
-            <div className="text-xs text-cat-yellow mt-0.5">
-              Skill: {skillId}
-            </div>
+    <div className={"relative transition-all duration-500 rounded-3xl p-1 bg-gradient-to-r " + (listening ? 'from-cat-yellow via-orange-500 to-cat-yellow animate-pulse shadow-[0_0_30px_rgba(255,184,28,0.4)]' : 'from-white/10 to-white/5 border border-white/10 shadow-2xl')}>
+      <div className="bg-[#111] rounded-[22px] p-4 flex items-center gap-5">
+        <button 
+          onClick={toggleMic}
+          className={"relative p-4 rounded-full transition-all duration-300 flex items-center justify-center overflow-hidden group " + (listening ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30' : 'bg-cat-yellow text-black hover:bg-yellow-400 shadow-[0_0_15px_rgba(255,184,28,0.5)]')}
+        >
+          {listening ? <MicOff size={24} className="relative z-10" /> : <Mic size={24} className="relative z-10" />}
+          {listening && (
+            <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20"></div>
           )}
-          {loading
-            ? <div className="text-gray-400 animate-pulse mt-1">Thinking…</div>
-            : response && (
-              <div className="text-white font-medium mt-1 leading-snug">{response}</div>
-            )}
+        </button>
+        <div className="flex-1 py-1">
+          <div className="flex items-center gap-2 text-cat-yellow text-xs font-bold tracking-widest uppercase mb-1">
+            {listening ? <Waves size={14} className="animate-pulse" /> : null}
+            {listening ? 'Voice Active' : 'Hey CAT'}
+          </div>
+          <div className={"text-lg font-medium transition-colors " + (listening ? 'text-gray-300' : 'text-white')}>
+            {response || transcript || 'Tap microphone to speak command...'}
+          </div>
         </div>
-
-        {response && (
-          <button onClick={() => {
-            const utt = new SpeechSynthesisUtterance(response);
-            window.speechSynthesis?.speak(utt);
-          }} className="text-gray-400 hover:text-white p-2 rounded transition">
-            <Volume2 size={20} />
-          </button>
-        )}
       </div>
     </div>
   );

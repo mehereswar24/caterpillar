@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertTriangle, CheckCircle, Zap, Droplets, Thermometer, Activity } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = 'http://localhost:5000';
 
 const SCENES = [
   { id: 'normal_operation',          label: 'Normal',          color: '#22c55e' },
