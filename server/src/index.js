@@ -37,9 +37,50 @@ db.exec(`
     completed_at TEXT DEFAULT (datetime('now')),
     UNIQUE(operator_id, module_id)
   );
+  CREATE TABLE IF NOT EXISTS operators (
+    operator_id   TEXT PRIMARY KEY,
+    name          TEXT NOT NULL,
+    face_descriptor TEXT,
+    assigned_machines TEXT,
+    skill_level   TEXT DEFAULT 'intermediate',
+    active        INTEGER DEFAULT 1,
+    created_at    TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS machine_sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    machine_id    TEXT NOT NULL,
+    operator_id   TEXT NOT NULL,
+    auth_method   TEXT DEFAULT 'face',
+    auth_score    REAL,
+    started_at    TEXT DEFAULT (datetime('now')),
+    ended_at      TEXT,
+    active        INTEGER DEFAULT 1
+  );
+  CREATE TABLE IF NOT EXISTS auth_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    machine_id    TEXT,
+    operator_id   TEXT,
+    result        TEXT,
+    confidence    REAL,
+    reason        TEXT,
+    timestamp     TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 app.set('db', db);
+
+// Seed operators if empty
+const opCount = db.prepare('SELECT COUNT(*) as c FROM operators').get().c;
+if (opCount === 0) {
+  const ins = db.prepare('INSERT OR IGNORE INTO operators (operator_id,name,face_descriptor,assigned_machines,skill_level) VALUES (?,?,?,?,?)');
+  [
+    ['OP001','Rajan Kumar',   'Male, short black hair, dark complexion, ~35 years, orange hard hat','EXC001,EXC002','expert'],
+    ['OP002','Suresh Patel',  'Male, medium build, brown complexion, ~28 years, yellow hard hat',  'EXC001,EXC003','intermediate'],
+    ['OP003','Anita Sharma',  'Female, long black hair tied back, medium complexion, ~32 years, white hard hat','EXC002,EXC004','expert'],
+    ['OP004','David Okafor',  'Male, tall, dark complexion, ~24 years, blue hard hat',              'EXC003,EXC005','beginner'],
+    ['OP005','Maria Santos',  'Female, short curly hair, light complexion, ~29 years, green hard hat','EXC004,EXC005','intermediate'],
+  ].forEach(o => ins.run(...o));
+}
 
 // ── Routes — exact endpoints from architecture diagram ────────
 app.use('/api/dashboard',     require('./routes/dashboard'));
