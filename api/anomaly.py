@@ -103,11 +103,17 @@ def _llm_explain(label: str, data: TelemetryRow) -> str:
 async def score_anomaly(data: TelemetryRow):
     _load()
 
+    idle_ratio = data.IdlingTime / (data.IdlingTime + data.ActiveTime + 1)
+    rpm_x_pressure = data.RPM * data.HydraulicPressure
+    fuel_per_active_min = data.FuelUsed / (data.ActiveTime + 1)
+    speed_x_unfastened = data.SpeedKPH * data.seatbelt_encoded
+
     features = [[
         data.RPM, data.HydraulicPressure, data.TiltAngle, data.FuelUsed,
         data.LoadCycles, data.IdlingTime, data.ActiveTime, data.SpeedKPH,
         data.EngineHours, data.hour_of_day, data.is_night,
         data.weather_encoded, data.soil_encoded, data.seatbelt_encoded,
+        idle_ratio, rpm_x_pressure, fuel_per_active_min, speed_x_unfastened,
     ]]
 
     if _model:

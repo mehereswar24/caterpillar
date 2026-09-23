@@ -24,11 +24,12 @@ def _llm_coaching(operator_id: str, idle_min: int, seatbelt_alerts: int,
     )
     try:
         from openai import OpenAI
-        client = OpenAI(base_url=OLLAMA_BASE, api_key="ollama", timeout=8, max_retries=0)
+        client = OpenAI(base_url=OLLAMA_BASE, api_key="ollama", timeout=12, max_retries=0)
         resp = client.chat.completions.create(
             model="qwen2.5:7b",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
+            max_tokens=80,
             extra_body={"reasoning_effort": "none"},
         )
         return resp.choices[0].message.content.strip()
