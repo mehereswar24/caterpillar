@@ -13,27 +13,27 @@ build/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+server/node_modules/
+server/.env
 
-# Models — large binaries, regenerate with train scripts
-models/*.txt
-models/*.pkl
-
-# Data — regenerate with generate_dataset.py
-operator_sessions.csv
-data/operator_sessions.csv
-data/*.db
-data/incidents.csv
-data/maintenance_log.csv
-data/proximity_events.csv
-data/training_completions.csv
+# Old FastAPI / ML folders — moved to caterpillar-models repo
+api/
+core/
+data/
+model/
+models/
+services/
+sim/
+scripts/
 
 # SQLite
 *.db
 *.sqlite
+*.log
 
 # OS
 .DS_Store
-Thumbs.db
+Thumbbs.db
 
 # IDE
 .vscode/
