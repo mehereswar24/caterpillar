@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ShieldAlert, Activity, BookOpen, Wrench, Users } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
@@ -19,6 +20,8 @@ function NavItem({ to, icon: Icon, label }) {
 }
 
 function App() {
+  const [liveData, setLiveData] = useState(null);
+
   return (
     <Router>
       <div className="flex h-screen bg-[#0a0a0a] overflow-hidden text-gray-100 font-sans selection:bg-cat-yellow selection:text-black">
@@ -30,12 +33,12 @@ function App() {
             <div className="text-xl font-bold tracking-tight text-white">Smart<span className="text-cat-yellow">Operator</span></div>
           </div>
           <nav className="flex-1 space-y-2">
-            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
-            <NavItem to="/safety" icon={ShieldAlert} label="Safety Monitor" />
-            <NavItem to="/anomaly" icon={Activity} label="Anomaly AI" />
-            <NavItem to="/training" icon={BookOpen} label="Training Hub" />
-            <NavItem to="/maintenance" icon={Wrench} label="Maintenance" />
-            <NavItem to="/supervisor" icon={Users} label="Fleet Control" />
+            <NavItem to="/"           icon={LayoutDashboard} label="Dashboard" />
+            <NavItem to="/safety"     icon={ShieldAlert}     label="Safety Monitor" />
+            <NavItem to="/anomaly"    icon={Activity}        label="Anomaly AI" />
+            <NavItem to="/training"   icon={BookOpen}        label="Training Hub" />
+            <NavItem to="/maintenance" icon={Wrench}         label="Maintenance" />
+            <NavItem to="/supervisor" icon={Users}           label="Fleet Control" />
           </nav>
           <div className="mt-auto pt-6 border-t border-white/5">
             <div className="flex items-center gap-3">
@@ -47,15 +50,15 @@ function App() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex-1 overflow-auto bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-gray-900 via-[#0a0a0a] to-[#0a0a0a]">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/safety" element={<Safety />} />
-            <Route path="/anomaly" element={<Anomaly />} />
-            <Route path="/training" element={<Training />} />
+            <Route path="/"            element={<Dashboard onTelemetryChange={setLiveData} />} />
+            <Route path="/safety"      element={<Safety liveData={liveData} />} />
+            <Route path="/anomaly"     element={<Anomaly />} />
+            <Route path="/training"    element={<Training />} />
             <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/supervisor" element={<Supervisor />} />
+            <Route path="/supervisor"  element={<Supervisor />} />
           </Routes>
         </div>
       </div>

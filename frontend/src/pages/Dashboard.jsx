@@ -2,6 +2,7 @@ import React from 'react';
 import { Thermometer, Wind, Zap } from 'lucide-react';
 import VoiceBar from '../components/VoiceBar';
 import TaskCard from '../components/TaskCard';
+import TruckSimulator from '../components/TruckSimulator';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 
 const data = [
@@ -12,7 +13,7 @@ const data = [
   { time: '12:00', efficiency: 94 },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ onTelemetryChange }) {
   return (
     <div className="p-10 relative h-full flex flex-col">
       <header className="mb-10 flex justify-between items-end">
@@ -23,7 +24,7 @@ export default function Dashboard() {
         <div className="flex gap-4">
           <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
             <Thermometer className="text-cat-yellow w-5 h-5" />
-            <span className="font-medium text-gray-200">22°C</span>
+            <span className="font-medium text-gray-200">22ï¿½C</span>
           </div>
           <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
             <Wind className="text-cat-yellow w-5 h-5" />
@@ -32,19 +33,24 @@ export default function Dashboard() {
         </div>
       </header>
       
+      {/* Live Truck Simulator */}
+      <div className="mb-8">
+        <TruckSimulator onTelemetryChange={onTelemetryChange} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <TaskCard 
             title="Trenching - Sector 4"
             eta="52"
-            shap="Wet soil (+18m) • Cloudy (+2m)"
+            shap="Wet soil (+18m) ï¿½ Cloudy (+2m)"
             status="In Progress"
             progress={65}
           />
           <TaskCard 
             title="Loading - Sector 2"
             eta="30"
-            shap="Dry soil • Normal load"
+            shap="Dry soil ï¿½ Normal load"
             status="Scheduled"
             progress={0}
           />
