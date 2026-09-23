@@ -2,7 +2,7 @@ services:
   - type: web
     name: cat-smart-operator
     runtime: node
-    buildCommand: bash build.sh
+    buildCommand: pip install -r requirements.txt && cd server && npm install && cd .. && python3 model/generate_data.py && python3 model/predictor.py train
     startCommand: node server/src/index.js
     envVars:
       - key: PORT
