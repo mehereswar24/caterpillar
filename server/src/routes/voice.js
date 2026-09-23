@@ -1,65 +1,67 @@
-const router = require('express').Router();
-const axios = require('axios');
+const router  = require('express').Router();
+const { spawnSync } = require('child_process');
+const axios   = require('axios');
+const path    = require('path');
 
-const OLLAMA = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const MODEL  = process.env.OLLAMA_TEXT_MODEL || 'qwen2.5:7b';
+const OLLAMA     = process.env.OLLAMA_BASE_URL  || 'http://localhost:11434';
+const TEXT_MODEL = process.env.OLLAMA_TEXT_MODEL || 'qwen2.5:7b';
+const PYTHON     = process.env.PYTHON_PATH       || 'python3';
+const RAG_SCRIPT = path.join(__dirname, '../../../core/rag_ask.py');
 
-// T0 grammar patterns
-const T0_PATTERNS = [
-  { pattern: /safety\s*score/i,         skill: 'operator.safety_score',
-    respond: () => `Your safety score today is 84 out of 100. One seatbelt alert this shift.` },
-  { pattern: /idle|idling/i,             skill: 'operator.idle',
-    respond: () => `You have idled for 22 minutes this shift. Reduce idle time to save fuel.` },
-  { pattern: /how long|time|estimate|eta/i, skill: 'task.estimate',
-    respond: () => `Estimated 52 minutes, plus or minus 8. Wet soil adds 18 minutes.` },
-  { pattern: /proximity|worker|zone/i,  skill: 'safety.proximity',
-    respond: () => `1 proximity alert logged this shift. No workers currently in zone.` },
-  { pattern: /maintenance|service/i,    skill: 'maintenance.status',
-    respond: () => `Next service due in approximately 413 hours. Engine component at risk.` },
-  { pattern: /fuel/i,                   skill: 'operator.fuel',
-    respond: () => `Fuel level is at 72%. Estimated 6 hours of operation remaining.` },
-  { pattern: /seatbelt/i,               skill: 'safety.seatbelt',
-    respond: () => `Seatbelt is currently fastened. Stay buckled while operating.` },
-  { pattern: /weather/i,                skill: 'site.weather',
-    respond: () => `Current conditions: Cloudy, 22°C, wind 12 kph. Rainy conditions expected later.` },
-];
-
-async function t2Respond(transcript) {
+// POST /api/voice/ask  — RAG + Qwen text answer
+router.post('/ask', async (req, res) => {
   try {
-    const res = await axios.post(`${OLLAMA}/v1/chat/completions`, {
-      model: MODEL,
-      messages: [
-        { role:'system', content:'You are the voice assistant for a CAT excavator operator. Answer in one plain sentence. No markdown.' },
-        { role:'user', content: transcript },
-      ],
-      max_tokens: 60, temperature: 0.3,
-    }, { timeout: 10000 });
-    return res.data.choices[0].message.content.trim();
-  } catch {
-    return `I heard: "${transcript}". Please check your dashboard for details.`;
-  }
-}
+    const { question, operator_context } = req.body;
+    if (!question) return res.status(400).json({ error: 'question required' });
 
-// POST /voice/respond
-router.post('/respond', async (req, res) => {
-  const { transcript='', operator_id='OP001', machine_id='EXC001' } = req.body;
+    // Build RAG prompt via Python
+    const ragResult = spawnSync(PYTHON,
+      [RAG_SCRIPT, 'prompt', JSON.stringify({ question, operator_context: operator_context || {} })],
+      { encoding: 'utf8', timeout: 10000 });
+    const fb = PYTHON === 'python3' ? 'python' : 'python3';
+    const ragFinal = (ragResult.error || ragResult.status !== 0)
+      ? spawnSync(fb, [RAG_SCRIPT, 'prompt', JSON.stringify({ question, operator_context: operator_context || {} })], { encoding: 'utf8', timeout: 10000 })
+      : ragResult;
 
-  // T0 — grammar match
-  for (const rule of T0_PATTERNS) {
-    if (rule.pattern.test(transcript)) {
-      return res.json({ speech_text: rule.respond(), skill_id: rule.skill, tier:'t0', action_taken:'executed' });
+    let prompt = question;
+    let sources = [];
+    try {
+      const parsed = JSON.parse(ragFinal.stdout.trim());
+      prompt  = parsed.prompt;
+      sources = parsed.sources || [];
+    } catch { /* fallback to raw question */ }
+
+    // Call Ollama
+    let answer = 'Ollama not available — check local server.';
+    try {
+      const resp = await axios.post(`${OLLAMA}/api/generate`, {
+        model: TEXT_MODEL, prompt, stream: false, options: { temperature: 0.3, num_predict: 150 }
+      }, { timeout: 20000 });
+      answer = resp.data.response?.trim() || answer;
+    } catch (e) {
+      answer = `Could not reach Ollama (${e.message}). Check that Ollama is running with qwen2.5:7b.`;
     }
-  }
 
-  // T2 — LLM fallback
-  const speech_text = await t2Respond(transcript);
-  res.json({ speech_text, skill_id:'llm.freeform', tier:'t2', action_taken:'executed' });
+    res.json({ question, answer, sources, model: TEXT_MODEL });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// POST /voice/transcribe
+// GET /api/voice/ask?q=... — convenience GET version
+router.get('/ask', async (req, res) => {
+  req.body = { question: req.query.q, operator_context: {} };
+  return router.handle({ ...req, method: 'POST', url: '/ask' }, res, () => {});
+});
+
+// POST /api/voice/transcribe — stub (real STT needs Whisper locally)
 router.post('/transcribe', (req, res) => {
-  // Whisper runs as a Python subprocess — stub for now
-  res.json({ transcript:'Voice transcription requires Whisper (Python). Use /voice/respond with text input.', confidence:0 });
+  res.json({ transcript: req.body.text || '', note: 'Use browser Web Speech API for live transcription.' });
+});
+
+// POST /api/voice/tts — text-to-speech via browser (returns SSML hint)
+router.post('/tts', (req, res) => {
+  res.json({ text: req.body.text, voice: 'Use browser SpeechSynthesis API.', ssml: `<speak>${req.body.text}</speak>` });
 });
 
 module.exports = router;

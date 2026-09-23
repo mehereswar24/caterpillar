@@ -1,0 +1,146 @@
+/**
+ * vision.js — Qwen2.5-VL vision analysis for:
+ *   - Seatbelt detection
+ *   - Worker proximity (people in frame)
+ *   - Hazard detection (slope, blind spot, debris)
+ *   - Operator fatigue signs (eyes closed, head drop)
+ *   - Pre-shift visual inspection
+ *
+ * APPLICATION OF VISION MODEL:
+ * The Qwen2.5-VL:7b model runs locally via Ollama and analyses
+ * images from the cab camera or site camera in real-time.
+ * Express calls Ollama /api/generate with base64 image + system prompt.
+ * Returns structured JSON that drives safety alerts on the UI.
+ */
+const router = require('express').Router();
+const axios  = require('axios');
+
+const OLLAMA       = process.env.OLLAMA_BASE_URL   || 'http://localhost:11434';
+const VISION_MODEL = process.env.OLLAMA_VISION_MODEL || 'qwen2.5vl:7b';
+
+const VISION_SYSTEM = `You are the safety vision AI for a CAT excavator.
+Analyse the image and respond with ONLY valid JSON matching this schema:
+{
+  "seatbelt_fastened": boolean,
+  "operator_visible": boolean,
+  "operator_alert": boolean,
+  "fatigue_signs": boolean,
+  "workers_in_frame": integer,
+  "workers_in_zone": integer,
+  "nearest_worker_m": float or null,
+  "hazard_detected": boolean,
+  "hazard_type": one of ["none","worker_proximity","slope_instability","blind_spot","debris","equipment_collision"],
+  "hazard_severity": one of ["none","low","medium","high","critical"],
+  "description": "one sentence summary"
+}
+Be conservative — if unsure, flag as potential hazard.`;
+
+async function callVision(imageBase64, extraPrompt = '') {
+  const resp = await axios.post(`${OLLAMA}/api/generate`, {
+    model:  VISION_MODEL,
+    prompt: extraPrompt || 'Analyse this construction site image for safety.',
+    images: [imageBase64],
+    system: VISION_SYSTEM,
+    stream: false,
+    options: { temperature: 0.1, num_predict: 300 },
+  }, { timeout: 30000 });
+
+  const raw = resp.data.response || '{}';
+  // Extract JSON from response
+  const match = raw.match(/\{[\s\S]*\}/);
+  return match ? JSON.parse(match[0]) : { error: 'Could not parse vision response', raw };
+}
+
+// POST /api/vision/analyze — general safety analysis
+router.post('/analyze', async (req, res) => {
+  try {
+    const { image, prompt } = req.body;
+    if (!image) return res.status(400).json({ error: 'image (base64) required' });
+    const result = await callVision(image, prompt);
+    // Derive alert list
+    const alerts = [];
+    if (result.seatbelt_fastened === false)   alerts.push({ type: 'SEATBELT_VIOLATION', severity: 'critical' });
+    if (result.workers_in_zone > 0)           alerts.push({ type: 'PROXIMITY_BREACH',   severity: 'critical', count: result.workers_in_zone });
+    if (result.fatigue_signs)                 alerts.push({ type: 'FATIGUE_DETECTED',   severity: 'high' });
+    if (result.hazard_detected && result.hazard_type !== 'none')
+                                              alerts.push({ type: result.hazard_type.toUpperCase(), severity: result.hazard_severity });
+    res.json({ ...result, alerts, model: VISION_MODEL });
+  } catch (e) {
+    res.status(500).json({ error: e.message, hint: 'Is Ollama running with qwen2.5vl:7b?' });
+  }
+});
+
+// POST /api/vision/seatbelt — focused seatbelt check
+router.post('/seatbelt', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
+    const result = await callVision(image, 'Is the operator wearing and fastening their seatbelt?');
+    res.json({
+      seatbelt_fastened: result.seatbelt_fastened,
+      operator_visible:  result.operator_visible,
+      alert:             result.seatbelt_fastened === false,
+      description:       result.description,
+      model:             VISION_MODEL,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/vision/proximity — worker proximity check
+router.post('/proximity', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
+    const result = await callVision(image, 'How many workers are visible? Are any in the danger zone (within 5 metres of the machine)?');
+    res.json({
+      workers_in_frame:  result.workers_in_frame,
+      workers_in_zone:   result.workers_in_zone,
+      nearest_worker_m:  result.nearest_worker_m,
+      breach:            result.workers_in_zone > 0,
+      description:       result.description,
+      model:             VISION_MODEL,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/vision/fatigue — operator fatigue detection
+router.post('/fatigue', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
+    const result = await callVision(image, 'Does the operator show signs of fatigue? Look for closed eyes, head drooping, or unfocused gaze.');
+    res.json({
+      fatigue_signs:    result.fatigue_signs,
+      operator_alert:   result.operator_alert,
+      recommendation:   result.fatigue_signs ? 'Stop machine and take a break immediately.' : 'Operator appears alert.',
+      description:      result.description,
+      model:            VISION_MODEL,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/vision/preshift — pre-shift visual inspection
+router.post('/preshift', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'image required' });
+    const result = await callVision(image, 'Inspect this machine image for pre-shift safety issues: fluid leaks, track damage, loose components, visible damage.');
+    res.json({
+      pass:        !result.hazard_detected,
+      issues:      result.hazard_detected ? [result.description] : [],
+      hazard_type: result.hazard_type,
+      description: result.description,
+      model:       VISION_MODEL,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+module.exports = router;

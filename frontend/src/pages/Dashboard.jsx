@@ -1,6 +1,7 @@
 import React from 'react';
 import { Thermometer, Wind, Zap } from 'lucide-react';
 import VoiceBar from '../components/VoiceBar';
+import VoiceAgent from '../components/VoiceAgent';
 import TaskCard from '../components/TaskCard';
 import TruckSimulator from '../components/TruckSimulator';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
@@ -82,7 +83,7 @@ export default function Dashboard({ onTelemetryChange }) {
       </div>
 
       <div className="mt-auto mx-auto w-full max-w-4xl pb-6">
-        <VoiceBar />
+        <VoiceAgent />
       </div>
     </div>
   );
