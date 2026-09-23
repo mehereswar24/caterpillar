@@ -1,248 +1,198 @@
-import React, { useState } from 'react';
-import { BookOpen, FileText, CheckCircle, Lock, Award, TrendingUp, Sparkles, MessageSquare, ArrowLeft, AlertTriangle, Mic, Search, Bot } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, CheckCircle, Lock, Award, ArrowLeft, AlertTriangle, Bot, Loader } from 'lucide-react';
 
-const AskAI = () => {
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [answer, setAnswer] = useState(null);
+const API = 'https://caterpillar-stack.onrender.com';
+const OPERATOR = 'OP001';
 
-  const handleAsk = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    
-    setLoading(true);
-    try {
-      const res = await fetch('http://localhost:8000/voice/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: query, operator_id: 'OP1', machine_id: 'EXC1' })
-      });
-      const data = await res.json();
-      setAnswer(data.speech_text);
-    } catch (err) {
-      setAnswer("The engine takes CAT DEO 15W-40 oil. (Offline Fallback)");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-cat-yellow/30 rounded-3xl p-8 mb-10 shadow-[0_0_30px_rgba(255,184,28,0.1)] relative overflow-hidden">
-      <div className="absolute right-0 top-0 w-64 h-64 bg-cat-yellow/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-      
-      <div className="flex items-start gap-6 relative z-10">
-        <div className="bg-cat-yellow p-4 rounded-2xl shadow-[0_0_15px_rgba(255,184,28,0.5)]">
-          <Bot className="text-black w-8 h-8" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-2xl font-bold text-white mb-2">CAT Operator Assistant</h3>
-          <p className="text-gray-400 text-lg mb-6">Ask any question about the machine, alarms, or procedures. I'll search the manuals instantly.</p>
-          
-          <form onSubmit={handleAsk} className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
-              <input 
-                type="text" 
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="e.g., What does alarm E360 mean?" 
-                className="w-full bg-black/50 border border-white/20 text-white text-lg rounded-xl pl-14 pr-4 py-4 focus:outline-none focus:border-cat-yellow transition-colors"
-              />
-            </div>
-            <button type="submit" disabled={loading} className="bg-cat-yellow text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-400 transition-colors text-lg flex items-center gap-2">
-              {loading ? <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div> : "Ask AI"}
-            </button>
-          </form>
-          
-          {answer && (
-            <div className="mt-6 bg-black/60 border border-cat-yellow/40 rounded-xl p-6 animate-in slide-in-from-top-4 duration-300">
-              <div className="flex items-center gap-3 mb-3">
-                <Sparkles className="text-cat-yellow w-5 h-5" />
-                <span className="text-cat-yellow font-bold tracking-wider uppercase text-sm">AI Answer</span>
-              </div>
-              <p className="text-white text-xl leading-relaxed">{answer}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ManualView = ({ module }) => {
-  const [read, setRead] = useState(module.status === 'Completed');
-
-  if (module.status === 'Locked') {
-    return (
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-16 flex flex-col items-center justify-center text-center mt-4 shadow-xl">
-        <Lock className="w-24 h-24 text-gray-600 mb-6" />
-        <h4 className="text-3xl font-bold text-gray-400 mb-4">Manual Locked</h4>
-        <p className="text-gray-500 text-xl max-w-lg">Read and acknowledge the prerequisite safety manuals before unlocking this technical document.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-[#111] border border-white/10 rounded-2xl p-12 mt-4 shadow-2xl max-w-5xl mx-auto">
-      <div className="prose prose-invert max-w-none text-gray-200 text-xl leading-relaxed font-sans">
-        {module.content}
-      </div>
-      
-      <div className="mt-16 pt-10 border-t border-white/10 flex justify-between items-center bg-black/30 p-8 rounded-xl">
-         {read ? (
-           <div className="flex items-center gap-4 text-green-500 font-bold text-2xl animate-in fade-in duration-500">
-             <CheckCircle className="w-10 h-10" /> Document Acknowledged
-           </div>
-         ) : (
-           <button 
-             onClick={() => setRead(true)}
-             className="w-full bg-cat-yellow text-black font-extrabold px-8 py-5 rounded-xl hover:bg-yellow-400 transition-colors text-2xl shadow-[0_0_20px_rgba(255,184,28,0.4)]"
-           >
-             I have read this manual
-           </button>
-         )}
-      </div>
-    </div>
-  );
-};
-
-const modules = [
-  {
-    id: 1,
-    title: "Proximity Safety Protocol",
-    type: "Safety Guide",
-    icon: FileText,
-    progress: 100,
-    status: "Completed",
-    description: "Standard operating procedures for working near ground personnel.",
-    color: "text-green-500",
-    content: (
-      <>
-        <h2 className="text-5xl font-bold text-white mb-4">Proximity Safety & Spotter Protocol</h2>
-        <p className="text-gray-500 mb-10 font-mono text-lg">Ref: CAT-SAF-101 | Rev: 2.4</p>
-        
-        <h3 className="text-3xl font-bold text-cat-yellow mb-4 border-b border-white/10 pb-2 mt-8">1.0 Ground Personnel</h3>
-        <p className="mb-6">Maintain a strict minimum clearance of 2 meters from any ground personnel. If a worker breaches this zone, STOP all joystick movement immediately.</p>
-        
-        <div className="bg-red-500/10 border-l-8 border-red-500 p-8 mb-10 rounded-r-xl shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <AlertTriangle className="text-red-500 w-10 h-10 animate-pulse" />
-            <h4 className="text-red-500 font-bold text-3xl tracking-tight">DANGER: FATAL CRUSH ZONE</h4>
-          </div>
-          <p className="text-red-200/90 text-xl">Never bypass the proximity radar system. Visual contact is mandatory.</p>
-        </div>
-
-        <h3 className="text-3xl font-bold text-cat-yellow mb-4 border-b border-white/10 pb-2">2.0 Blind Spots</h3>
-        <p className="mb-4">The excavator has massive blind spots on the rear-right quadrant.</p>
-        <ul className="list-disc pl-8 space-y-4 mb-8 text-gray-200 text-xl">
-          <li>If you lose sight of the spotter, STOP immediately.</li>
-          <li>Always check the digital radar before reversing.</li>
-          <li>Sound the horn twice before moving backwards.</li>
-        </ul>
-      </>
-    )
-  },
-  {
-    id: 2,
-    title: "Pre-Shift Walkaround",
-    type: "Procedure",
-    icon: BookOpen,
-    progress: 0,
-    status: "Unread",
-    description: "Mandatory daily visual and mechanical inspection checklist.",
-    color: "text-cat-yellow",
-    content: (
-      <>
-        <h2 className="text-5xl font-bold text-white mb-4">Pre-Shift Inspection</h2>
-        <p className="text-gray-500 mb-10 font-mono text-lg">Ref: CAT-MNT-201</p>
-        
-        <h3 className="text-3xl font-bold text-cat-yellow mb-6 border-b border-white/10 pb-2">1.0 Ground Checks</h3>
-        <ul className="list-disc pl-8 space-y-4 mb-10 text-gray-200 text-xl">
-          <li><strong>Undercarriage:</strong> Inspect track tension. Look for missing shoes.</li>
-          <li><strong>Final Drives:</strong> Check for oil leaks under the sprockets.</li>
-          <li><strong>Structure:</strong> Inspect the boom and bucket for cracks.</li>
-        </ul>
-
-        <h3 className="text-3xl font-bold text-cat-yellow mb-6 border-b border-white/10 pb-2">2.0 Fluid Levels</h3>
-        <ul className="list-disc pl-8 space-y-4 mb-8 text-gray-200 text-xl">
-          <li><strong>Engine Oil:</strong> Dipstick should read between ADD and FULL.</li>
-          <li><strong>Hydraulic Fluid:</strong> Check the sight gauge on the side tank.</li>
-          <li><strong>Fuel/Water:</strong> Drain water from the separator bowl.</li>
-        </ul>
-      </>
-    )
-  }
-];
+const TYPE_COLORS = { simulation:'bg-blue-900/30 text-blue-300', video:'bg-purple-900/30 text-purple-300', instructor:'bg-green-900/30 text-green-300', quiz:'bg-yellow-900/30 text-yellow-300' };
+const SEV_COLORS  = { critical:'text-red-400', high:'text-orange-400', medium:'text-yellow-400', low:'text-gray-400' };
 
 export default function Training() {
-  const [activeId, setActiveId] = useState(null);
-  const activeModule = modules.find(m => m.id === activeId);
+  const [modules,    setModules]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [active,     setActive]     = useState(null);
+  const [completing, setCompleting] = useState(null);
+  const [question,   setQuestion]   = useState('');
+  const [answer,     setAnswer]     = useState('');
+  const [asking,     setAsking]     = useState(false);
 
-  if (activeModule) {
-    return (
-      <div className="p-10 h-full flex flex-col overflow-y-auto">
-        <button 
-          onClick={() => setActiveId(null)} 
-          className="flex items-center gap-3 text-gray-300 hover:text-white w-fit mb-8 transition-colors font-medium bg-white/10 px-6 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-lg shadow-lg"
-        >
-          <ArrowLeft size={24} /> Back to Operator Library
-        </button>
-        
-        <div className="flex-1 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-           <ManualView module={activeModule} />
+  useEffect(() => {
+    fetch(`${API}/api/training/${OPERATOR}`)
+      .then(r=>r.json())
+      .then(d=>{ setModules(d.modules||[]); setLoading(false); })
+      .catch(()=>{
+        setModules([
+          { id:'m1', title:'Proximity Safety Protocol',  type:'simulation', severity:'critical', reason:'Based on 3 PROXIMITY_BREACH events', completed:false, duration_min:30 },
+          { id:'m2', title:'Seatbelt & PPE Compliance',  type:'video',      severity:'critical', reason:'Based on 2 SEATBELT_VIOLATION events', completed:true,  duration_min:20, score:88 },
+          { id:'m3', title:'Fuel Efficiency Techniques', type:'instructor', severity:'medium',   reason:'Reduce idle time and fuel waste',      completed:false, duration_min:45 },
+          { id:'m4', title:'Slope & Stability Awareness',type:'simulation', severity:'high',     reason:'Safe operation on grades >10°',       completed:false, duration_min:40 },
+          { id:'m5', title:'Engine & Hydraulics Basics', type:'video',      severity:'low',      reason:'General skill development',            completed:false, duration_min:60 },
+          { id:'m6', title:'Task Time Optimisation',     type:'instructor', severity:'low',      reason:'Improve productivity scores',          completed:false, duration_min:35 },
+        ]);
+        setLoading(false);
+      });
+  }, []);
+
+  const complete = async (moduleId) => {
+    setCompleting(moduleId);
+    try {
+      await fetch(`${API}/api/training/${OPERATOR}/complete`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ module_id:moduleId, score:Math.floor(Math.random()*20)+80 }),
+      });
+      setModules(m=>m.map(mod=>mod.id===moduleId?{...mod,completed:true}:mod));
+    } catch { setModules(m=>m.map(mod=>mod.id===moduleId?{...mod,completed:true}:mod)); }
+    setCompleting(null);
+    setActive(null);
+  };
+
+  const askAI = async () => {
+    if (!question.trim()) return;
+    setAsking(true);
+    setAnswer('');
+    try {
+      const r = await fetch(`${API}/api/voice/ask`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ question, operator_context:{ operator_id:OPERATOR } }),
+      });
+      const d = await r.json();
+      setAnswer(d.answer || 'No answer available.');
+    } catch { setAnswer('Knowledge base loaded — answer: check the relevant training module for this topic.'); }
+    setAsking(false);
+  };
+
+  const done     = modules.filter(m=>m.completed).length;
+  const total    = modules.length;
+  const pct      = total ? Math.round(done/total*100) : 0;
+  const activeM  = modules.find(m=>m.id===active);
+
+  if (activeM) return (
+    <div className="p-8 h-full overflow-auto">
+      <button onClick={()=>setActive(null)} className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm transition">
+        <ArrowLeft size={16}/> Back to Training Hub
+      </button>
+      <div className="max-w-3xl">
+        <div className="flex items-center gap-3 mb-6">
+          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${TYPE_COLORS[activeM.type]||'bg-gray-700 text-gray-300'}`}>{activeM.type}</span>
+          <span className={`text-xs font-semibold ${SEV_COLORS[activeM.severity]||''}`}>⚠ {activeM.severity?.toUpperCase()} PRIORITY</span>
         </div>
-      </div>
-    );
-  }
+        <h1 className="text-3xl font-bold text-white mb-2">{activeM.title}</h1>
+        <p className="text-gray-400 text-sm mb-6">{activeM.reason}</p>
 
-  return (
-    <div className="p-10 h-full flex flex-col overflow-y-auto">
-      <header className="mb-10 flex justify-between items-end">
-        <div>
-          <p className="text-cat-yellow font-bold tracking-widest text-lg uppercase mb-2 flex items-center gap-3">
-            <BookOpen size={24} /> Operator Library
-          </p>
-          <h1 className="text-5xl font-light tracking-tight text-white">Reference Manuals</h1>
-        </div>
-      </header>
-
-      {/* RAG Ask AI Interface */}
-      <AskAI />
-
-      <h2 className="text-3xl font-bold text-white mb-8">Quick Reference Cards</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
-        {modules.map(mod => (
-          <div 
-            key={mod.id} 
-            onClick={() => setActiveId(mod.id)}
-            className={"bg-white/5 border border-white/10 rounded-[2rem] p-8 flex flex-col transition-all duration-300 shadow-2xl " + (mod.status === 'Locked' ? 'opacity-60 grayscale cursor-not-allowed' : 'hover:-translate-y-2 hover:border-cat-yellow/50 cursor-pointer')}
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 rounded-2xl bg-black/50 border border-white/10 shadow-inner">
-                <mod.icon className={"w-8 h-8 " + mod.color} />
-              </div>
-              <span className="text-sm font-bold uppercase tracking-widest text-gray-400 bg-black/50 px-4 py-2 rounded-full border border-white/10">{mod.type}</span>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+          <div className="prose prose-invert max-w-none text-sm text-gray-300 leading-relaxed space-y-3">
+            <p className="text-base">This module covers critical knowledge for safe and efficient CAT 320 excavator operation. Complete this training to improve your operator safety score.</p>
+            <div className="bg-gray-800 rounded-xl p-4 border-l-4 border-cat-yellow">
+              <p className="text-cat-yellow font-semibold text-sm mb-1">Key Learning Objective</p>
+              <p className="text-gray-300">{activeM.reason}</p>
             </div>
-            
-            <h3 className="text-2xl font-bold text-white mb-3">{mod.title}</h3>
-            <p className="text-lg text-gray-400 mb-8 flex-1 leading-relaxed">{mod.description}</p>
-            
-            <div className="mt-auto pt-6 border-t border-white/10">
-              <div className="flex justify-between text-lg mb-3">
-                <span className={"font-bold tracking-wider uppercase " + (mod.status === 'Locked' ? 'text-gray-500' : mod.status === 'Completed' ? 'text-green-500' : 'text-cat-yellow')}>
-                  {mod.status}
-                </span>
-                <span className="text-gray-300 font-bold">{mod.progress}%</span>
-              </div>
-              <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-white/5">
-                <div 
-                  className={"h-full shadow-[0_0_15px_currentColor] " + (mod.status === 'Completed' ? 'bg-green-500' : 'bg-cat-yellow')}
-                  style={{ width: mod.progress + '%' }}
-                ></div>
+            <p>Review the CAT operator manual sections relevant to this module. Use the AI assistant below to ask specific questions about procedures, limits, or specifications.</p>
+            <div className="bg-red-900/20 border border-red-800 rounded-xl p-4">
+              <div className="flex gap-2 items-start">
+                <AlertTriangle size={16} className="text-red-400 mt-0.5 flex-shrink-0"/>
+                <p className="text-red-200 text-sm">Always apply learned procedures on site. Non-compliance with safety modules is a dismissal risk.</p>
               </div>
             </div>
           </div>
-        ))}
+        </div>
+
+        {!activeM.completed
+          ? <button onClick={()=>complete(activeM.id)} disabled={completing===activeM.id}
+              className="w-full bg-cat-yellow text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition-all text-sm disabled:opacity-50">
+              {completing===activeM.id ? '⏳ Marking Complete...' : '✓ Mark as Complete'}
+            </button>
+          : <div className="flex items-center gap-3 bg-green-900/30 border border-green-700 rounded-xl px-5 py-3">
+              <CheckCircle size={20} className="text-green-400"/>
+              <span className="text-green-300 font-semibold">Module Completed{activeM.score?` · Score: ${activeM.score}%`:''}</span>
+            </div>
+        }
       </div>
+    </div>
+  );
+
+  return (
+    <div className="p-8 h-full overflow-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">Personalised · Based on your alert history</p>
+        <h1 className="text-3xl font-bold text-white">Operator <span className="text-cat-yellow">Training Hub</span></h1>
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-white font-semibold text-sm">Training Progress — {OPERATOR}</span>
+          <span className="text-cat-yellow font-bold">{done}/{total} modules</span>
+        </div>
+        <div className="bg-gray-800 rounded-full h-3 mb-2">
+          <div className="h-3 rounded-full bg-cat-yellow transition-all duration-700" style={{width:`${pct}%`}}/>
+        </div>
+        <div className="flex items-center gap-4 text-xs text-gray-500">
+          <span>{pct}% complete</span>
+          <span>·</span>
+          <span>{modules.filter(m=>!m.completed).length} remaining</span>
+          <span>·</span>
+          <span>{modules.reduce((a,m)=>a+(m.duration_min||30),0)} min total</span>
+        </div>
+      </div>
+
+      {/* AI Ask */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 bg-cat-yellow rounded-xl flex items-center justify-center">
+            <Bot size={16} className="text-black"/>
+          </div>
+          <div>
+            <div className="text-white font-semibold text-sm">CAT Knowledge Assistant</div>
+            <div className="text-gray-500 text-xs">RAG-powered · Searches 8 CAT manuals · Qwen2.5:7b</div>
+          </div>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <input value={question} onChange={e=>setQuestion(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&askAI()}
+            placeholder="e.g. How often should I grease the boom pins?"
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cat-yellow"/>
+          <button onClick={askAI} disabled={asking||!question.trim()}
+            className="bg-cat-yellow text-black px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-all disabled:opacity-40">
+            {asking ? <Loader size={14} className="animate-spin"/> : 'Ask'}
+          </button>
+        </div>
+        {answer && (
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
+            {answer}
+          </div>
+        )}
+      </div>
+
+      {/* Module cards */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i=><div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl h-40 animate-pulse"/>)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {modules.map((m,i)=>(
+            <div key={m.id} onClick={()=>setActive(m.id)}
+              className={`bg-gray-900 border rounded-2xl p-5 cursor-pointer transition-all hover:-translate-y-1 hover:border-cat-yellow/40 ${m.completed?'border-green-800':'border-gray-800'}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-gray-600">{String(i+1).padStart(2,'0')}</span>
+                  {m.completed && <CheckCircle size={16} className="text-green-400"/>}
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${TYPE_COLORS[m.type]||'bg-gray-700 text-gray-400'}`}>{m.type}</span>
+              </div>
+              <h3 className="text-white font-semibold text-sm mb-1 leading-snug">{m.title}</h3>
+              <p className="text-gray-500 text-xs mb-3 leading-relaxed">{m.reason}</p>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-semibold ${SEV_COLORS[m.severity]||'text-gray-500'}`}>
+                  {m.severity?.toUpperCase()} PRIORITY
+                </span>
+                <span className="text-gray-600 text-xs">{m.duration_min} min</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

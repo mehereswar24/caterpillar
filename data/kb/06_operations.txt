@@ -1,0 +1,58 @@
+CAT 320 EXCAVATOR — OPERATIONS AND PRODUCTIVITY GUIDE
+
+MACHINE STARTUP PROCEDURE
+Step 1: Perform pre-shift walkaround inspection as described in the Maintenance Manual.
+Step 2: Adjust seat position and mirrors before starting engine.
+Step 3: Fasten seatbelt.
+Step 4: Turn ignition key to ON — do not crank. Wait for all warning lights to complete self-test (approximately 5 seconds).
+Step 5: Wait for glow plug preheat indicator to extinguish (cold weather operation).
+Step 6: Turn key to START — release as soon as engine fires.
+Step 7: Allow engine to idle for 5 minutes before operating under load — allows oil to reach all components and hydraulic oil to warm.
+Step 8: In cold weather (below 5 degrees Celsius), idle for 10 minutes and cycle all hydraulic functions slowly before full load operation.
+Step 9: Set throttle to appropriate level for the work task.
+
+SHUTDOWN PROCEDURE
+Step 1: Park machine on firm level ground — never park on a slope if avoidable.
+Step 2: Lower all attachments to the ground — boom, stick, and bucket fully rested.
+Step 3: Move all joystick controls to neutral position.
+Step 4: Engage the parking brake.
+Step 5: Reduce engine to low idle (turn throttle dial to minimum).
+Step 6: Run at idle for 5 minutes — this cools the turbocharger and hydraulic oil.
+Step 7: Turn key to OFF.
+Step 8: Remove the key.
+Step 9: Activate cab door lock if machine will be unattended.
+
+FUEL EFFICIENCY TECHNIQUES
+Reduce idle time: every hour of unnecessary idling burns approximately 6-8 litres of fuel and produces zero productive output. Idle for no more than 3-5 minutes — if waiting longer, shut down the engine.
+Match RPM to task: use minimum RPM that completes the task smoothly. Rock breaking requires high RPM. Light grading can be done at 1,500 RPM instead of 2,000 RPM.
+Smooth joystick operation: abrupt control inputs cause hydraulic pressure spikes and fuel consumption increase of up to 25%. Slow, smooth movements maintain consistent pressure and are faster overall.
+Optimise swing angle: reduce the swing angle between dig and dump position — target below 90 degrees where site layout allows. Every 10-degree reduction in average swing saves approximately 3% fuel.
+Correct bucket selection: using a bucket larger than needed wastes power. Select the smallest bucket that achieves the required productivity. A full 1.2 m3 bucket requires less energy than a partial 1.9 m3 bucket for the same volume.
+Use auto-idle: the CAT 320 has an auto-idle feature that reduces engine RPM after 5 seconds of joystick inactivity. Ensure this is enabled.
+Grade correctly: position the machine so it can complete the full dig and dump cycle without repositioning. Every repositioning cycle costs 15-30 seconds of non-productive time.
+
+DIGGING TECHNIQUES
+Efficient bucket fill: curl the bucket at the end of the dig stroke — a fully curled, full bucket is 40% more productive than multiple shallow passes. Target 100% bucket fill on each pass. Adjust crowd and curl pressure to match soil hardness.
+Working depth: most efficient production occurs at 70-80% of maximum arm reach. Avoid digging with a fully extended arm — forces and efficiency are reduced significantly.
+Loading trucks: position the truck to minimise swing angle. Signal the truck driver with the horn before each load. Do not drop loads from height — lower the bucket to the truck bed to reduce spillage and avoid damaging the truck.
+Trenching: mark the trench centreline with chalk or spray paint before starting. Use laser or digital depth gauge (Cat Grade) to maintain consistent depth without over-digging. Over-digging and then backfilling is the single biggest waste of time in trenching work.
+Rock excavation: use the boom down crowd technique — apply crowd (arm in) while pushing down on the boom to concentrate force at the bucket edge. Use bucket teeth on rock, not the flat cutting edge. Replace worn teeth before they wear to the adapter — worn teeth halve productivity.
+
+ATTACHMENT OPERATIONS
+Quick coupler safety: always verify the attachment is fully locked before lifting. Test by pulling up with boom while holding the bucket with the stick. Visually confirm both locking pins are extended. Never operate with a half-locked coupler.
+Hydraulic breaker operation: strike perpendicular to the rock surface — off-angle strikes cause tool bending. Lift and reposition if the breaker penetrates to full depth without breaking material. Never use the breaker as a prying tool or swing it sideways — this destroys the internal piston. Maximum continuous breaking time per position: 15 seconds — reposition after this. Avoid blanking — operating the breaker when no material is present causes severe internal damage within seconds.
+Auger operation: lower the auger to the surface, apply light crowd pressure, then engage rotation. Do not apply excessive crowd force — the cutting torque of the bit should advance the auger, not the arm cylinder. If the auger stalls, reverse rotation briefly then continue.
+Tiltrotator use: confirm oil flow settings match the tiltrotator specification. Do not swing the machine while the attachment is tilted to maximum angle — this creates extreme stress on the coupler and quick hitch.
+
+CAT GRADE AND TECHNOLOGY
+Cat Grade with 2D: provides an in-cab guidance display showing cut/fill and depth. Set up the job design on the Cat Grade monitor using measured benchmarks. Recalibrate at least daily using a known reference point. Cat Grade reduces over-digging by an average of 30-40%.
+Cat Grade with 3D: requires a GPS base station or Cat Connect RTK subscription. Sets up a full 3D design surface. The machine automatically limits bucket penetration to the design surface — near-automatic final trimming.
+Cat Payload: measures load weight through boom and stick pressure sensors. Target payload is set on the monitor — the system alerts when approaching target. Consistent truck loading reduces overloading fines and tyre wear.
+Cat Product Link: transmits machine location, hours, fuel consumption, idle time, and fault codes to the owner's My.Cat.Com account. Review daily fuel and idle reports with your supervisor — this data is used for operator performance reviews.
+
+COMMON PRODUCTIVITY MISTAKES
+Swinging too far: most operators swing 30-40 degrees more than necessary — this is wasted cycle time. Reposition the machine more frequently to minimise swing.
+Waiting for trucks: brief your truck fleet on cycle time expectations. If you are consistently waiting for trucks, the truck fleet is undersized for the excavator's production rate.
+Overcrowding: packing the bucket too full causes soil to overflow during swing, wasting material and time. Target 95% fill, not 110%.
+Cold machine operation: pushing a cold machine hard before the hydraulic oil is at temperature increases wear and reduces efficiency. The first 10 minutes of operation should be gradual.
+Poor bucket teeth management: replacing bucket teeth takes 30 minutes. Running worn teeth costs hours of reduced production per day.

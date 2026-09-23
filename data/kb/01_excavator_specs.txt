@@ -1,0 +1,83 @@
+CAT 320 EXCAVATOR — COMPLETE TECHNICAL SPECIFICATIONS
+
+GENERAL
+Model: Caterpillar 320 GC / 320 / 320 GX
+Operating Weight: 320 GC = 20,200 kg | 320 = 22,500 kg | 320 GX = 23,100 kg
+Engine Model: CAT C4.4 ACERT (320 GC) | CAT C7.1 ACERT (320 GX)
+Net Power (ISO 9249): 122 kW (164 HP) at 2,000 rpm
+Peak Torque: 700 Nm at 1,400 rpm
+Emission Standard: EU Stage V / US EPA Tier 4 Final
+
+ENGINE
+Displacement: 4.4 Litres (320 GC) | 7.1 Litres (320 GX)
+Number of Cylinders: 4 (320 GC) | 6 (320 GX)
+Bore x Stroke: 105 mm x 127 mm
+Aspiration: Turbocharged, air-to-air aftercooled
+Fuel System: High-pressure common rail direct injection
+Compression Ratio: 17.5:1
+Governed Speed: 2,000 rpm (high idle) | 1,000 rpm (low idle)
+Cooling: Hydraulic fan drive with automatic temperature control
+
+HYDRAULICS
+Main Pump: Two variable displacement axial piston pumps
+Maximum Flow: 2 x 210 L/min
+System Relief Pressure: 34,300 kPa (4,975 psi)
+Swing Relief Pressure: 28,400 kPa (4,119 psi)
+Pilot System Pressure: 4,900 kPa (711 psi)
+Hydraulic Tank Capacity: 215 Litres
+Hydraulic Oil Temperature Operating Range: 40°C to 90°C
+Maximum Hydraulic Oil Temperature: 100°C (alarm triggers at 90°C)
+
+DIMENSIONS
+Overall Length (boom over front): 9,490 mm
+Overall Width (with 600 mm shoes): 2,990 mm
+Overall Height (to top of cab): 3,040 mm
+Track Gauge: 2,390 mm
+Minimum Ground Clearance: 470 mm
+Tail Swing Radius: 2,620 mm
+Cab Height: 1,100 mm interior
+
+DIGGING PERFORMANCE
+Maximum Digging Depth: 6,690 mm (6.69 m)
+Maximum Reach at Ground Level: 9,780 mm (9.78 m)
+Maximum Loading Height: 6,710 mm (6.71 m)
+Maximum Digging Height: 9,150 mm (9.15 m)
+Maximum Cutting Force (bucket): 137 kN (boom/stick)
+Maximum Stick Force: 93 kN
+Bucket Digging Force (ISO): 155 kN
+
+TRAVEL
+Maximum Travel Speed High: 5.5 km/h
+Maximum Travel Speed Low: 3.3 km/h
+Maximum Gradeability: 70% (35 degrees)
+Ground Pressure (600 mm shoe): 46 kPa (6.7 psi)
+Track Width Options: 500 mm | 600 mm | 700 mm | 800 mm
+
+CAPACITIES
+Fuel Tank: 345 Litres
+DEF/AdBlue Tank: 33 Litres
+Engine Oil: 22 Litres (with filter)
+Cooling System: 26 Litres
+Final Drive Oil (each): 4.0 Litres
+Swing Drive Oil: 7.0 Litres
+
+ELECTRICAL
+System Voltage: 24 Volt
+Battery: 2 x 12V 100Ah maintenance-free
+Alternator Output: 80 Amp
+Starting Motor: 5.5 kW
+
+CAB AND OPERATOR
+ROPS/FOPS: Level II certified
+Noise Level (interior, ISO 6396): 70 dB(A)
+Noise Level (exterior, ISO 6395): 102 dB(A) LWA
+Air Conditioning: 5.5 kW cooling capacity
+Seat: Fully adjustable suspension seat, 50-130 kg operator range
+Monitor: 10-inch touchscreen Cat Grade display
+Camera: Standard rear-view, optional 360-degree surround view
+
+BUCKET OPTIONS
+General Duty 0.57 m3 to 1.90 m3
+Heavy Duty Rock Bucket: 0.95 m3
+Ditch Cleaning: 1.60 m3 wide profile
+Severe Duty: For abrasive rock, quarry use

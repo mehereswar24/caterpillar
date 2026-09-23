@@ -1,0 +1,87 @@
+CAT 320 EXCAVATOR — ATTACHMENTS AND SITE GUIDE
+
+STANDARD ATTACHMENTS
+
+General Purpose Bucket
+Available capacities: 0.57 m3, 0.80 m3, 0.95 m3, 1.19 m3, 1.40 m3, 1.60 m3, 1.90 m3.
+Use for general earthmoving, trench digging, loading, grading.
+Bucket teeth should be replaced when worn to within 50 mm of the adapter.
+Tooth replacement interval: typically every 200-400 hours depending on material abrasiveness.
+
+Heavy Duty Rock Bucket
+Capacity: 0.95 m3 with reinforced wear plates and rock guard.
+Use for fractured rock, concrete rubble, demolition debris.
+Heavier construction reduces cycle times — use only where rock conditions justify the weight penalty.
+
+Hydraulic Breaker / Hammer
+Weight class: 800 kg to 1,500 kg class for the CAT 320.
+Blow energy: 3,000 to 6,000 joules.
+Oil flow requirement: 110-180 L/min at 180-220 bar.
+Use for breaking rock, concrete, and frozen ground.
+Critical rule: never operate without material contact for more than 15 seconds — blank firing destroys the piston within minutes.
+Tool selection: moil point for general rock, chisel for concrete slabs, blunt for compacted clay.
+
+Auger
+Diameter range: 300 mm to 1,200 mm.
+Drive head torque: 10,000 to 25,000 Nm.
+Use for drilling post holes, pile holes, drainage holes.
+Do not exceed maximum RPM specified for the bit diameter.
+In rocky conditions, switch to a rock auger bit with tungsten carbide teeth.
+
+Hydraulic Thumb
+Use for grasping pipes, boulders, trees, irregular objects during demolition.
+Open position: 900 mm from bucket lip.
+Maximum grip force: 35 kN.
+Never use the thumb to strike or pry — designed for gripping only.
+
+Plate Compactor
+Plate size: typically 800 mm x 500 mm.
+Compaction force: 15,000-25,000 N.
+Use for trench backfill compaction — achieves equivalent compaction to a pedestrian roller in less time.
+Maximum compaction lift: 300 mm of loose material per pass.
+Make a minimum of 3 passes per lift.
+
+Tiltrotator
+Allows 360-degree continuous rotation and 40-degree tilt in each direction.
+Weight: 500-900 kg additional.
+Reduces machine repositioning by 40-60% in grading and landscaping work.
+Requires additional hydraulic lines — third and fourth auxiliary hydraulic circuits.
+Calibrate tilt and rotation sensors before each shift.
+
+Quick Coupler
+Allows attachment change in under 30 seconds.
+Safety check procedure: after connecting, raise the attachment 300 mm off the ground, apply full bucket curl, then apply full bucket dump — the attachment should not move. Confirm visually that both locking pins are fully extended.
+Pin diameter: 80 mm (standard) or 100 mm (heavy duty).
+Never rely on the secondary safety lock as the primary retention method.
+
+GROUND CONDITIONS GUIDE
+
+Soft Ground (Clay, Mud, Peat)
+Ground pressure: use widest available track shoes (800 mm or swamp pads).
+Approach edges cautiously — soft ground can collapse without warning.
+When working in mud, inspect track tension every 4 hours — mud packs between rollers and tightens tracks.
+If machine begins to sink, use boom as an outrigger immediately.
+Maximum recommended working slope: 10 degrees on clay or wet ground.
+
+Hard Ground (Rock, Compacted Gravel)
+Ground pressure: narrow track shoes (500 mm) acceptable, reduce track wear.
+Inspect track shoes for cracks every 50 hours — impact loads from rock cause fatigue cracking.
+Avoid spinning tracks on rock — causes rapid wear on track pads and sprocket.
+
+Sandy Ground
+Highly permeable — excavation faces can collapse rapidly, especially near water.
+Maintain 1:1 slope ratio on sandy trench walls without shoring.
+Sand can liquefy if saturated — never drive near saturated sand slopes.
+
+Frozen Ground
+Ground is harder than rock when fully frozen — breaker is usually required.
+Thawing can be rapid and uneven — what was safe in the morning may not be safe in the afternoon.
+Watch for melt water ponding near working area — indicator of thaw.
+
+Working Near Water
+Maintain machine angle to allow rapid exit in case of bank collapse.
+If working from a barge or pontoon: secure outriggers, verify pontoon load rating.
+Do not allow hydraulic oil temperature to drop below 10 degrees C when working in cold water — risk of hose embrittlement and sudden burst.
+
+DAILY PRODUCTION REPORTING
+Record at end of shift: total hours operated, total fuel consumed, volume or tonnage produced, machine faults or concerns, near-miss incidents, and any delays with cause. This data feeds the task time prediction model and operator efficiency scores used in the Smart Operator dashboard.

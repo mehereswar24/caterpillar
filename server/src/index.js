@@ -54,6 +54,7 @@ app.use('/api/anomaly',       require('./routes/anomaly'));
 app.use('/api/maintenance',   require('./routes/maintenance'));
 app.use('/api/voice',         require('./routes/voice'));
 app.use('/api/vision',        require('./routes/vision'));
+app.use('/api/auth',          require('./routes/auth'));
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({

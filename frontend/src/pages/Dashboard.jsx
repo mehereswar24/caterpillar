@@ -1,90 +1,114 @@
-import React from 'react';
-import { Thermometer, Wind, Zap } from 'lucide-react';
-import VoiceBar from '../components/VoiceBar';
-import VoiceAgent from '../components/VoiceAgent';
-import TaskCard from '../components/TaskCard';
+import React, { useState, useEffect } from 'react';
+import { Zap, TrendingUp, AlertTriangle, Clock, Activity } from 'lucide-react';
 import TruckSimulator from '../components/TruckSimulator';
-import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
+import VoiceAgent from '../components/VoiceAgent';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 
-const data = [
-  { time: '08:00', efficiency: 82 },
-  { time: '09:00', efficiency: 85 },
-  { time: '10:00', efficiency: 91 },
-  { time: '11:00', efficiency: 88 },
-  { time: '12:00', efficiency: 94 },
-];
+const API = 'https://caterpillar-stack.onrender.com';
 
 export default function Dashboard({ onTelemetryChange }) {
+  const [dash, setDash]   = useState(null);
+  const [time, setTime]   = useState(new Date());
+
+  useEffect(() => {
+    fetch(`${API}/api/dashboard`).then(r => r.json()).then(setDash).catch(() => {});
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const stats = [
+    { label: 'Machines',     value: dash?.summary?.total_machines ?? 5,    color: '#FFB81C', icon: Activity },
+    { label: 'Tasks Today',  value: dash?.summary?.tasks_today    ?? 24,   color: '#22c55e', icon: Clock },
+    { label: 'Completed',    value: dash?.summary?.completed       ?? 18,   color: '#60a5fa', icon: TrendingUp },
+    { label: 'Active Alerts',value: dash?.summary?.active_alerts   ?? 3,   color: '#ef4444', icon: AlertTriangle },
+  ];
+
+  const fuelData = dash?.fuel_by_machine ?? [
+    { machine_id:'EXC001', fuel_used_l:42 },{ machine_id:'EXC002', fuel_used_l:38 },
+    { machine_id:'EXC003', fuel_used_l:55 },{ machine_id:'EXC004', fuel_used_l:29 },
+    { machine_id:'EXC005', fuel_used_l:47 },
+  ];
+
+  const effData = [
+    { time:'08:00', score:82 },{ time:'09:00', score:85 },{ time:'10:00', score:91 },
+    { time:'11:00', score:88 },{ time:'12:00', score:94 },{ time:'13:00', score:89 },
+  ];
+
   return (
-    <div className="p-10 relative h-full flex flex-col">
-      <header className="mb-10 flex justify-between items-end">
+    <div className="p-8 h-full flex flex-col gap-6 overflow-auto">
+      {/* Header */}
+      <div className="flex items-end justify-between">
         <div>
-          <p className="text-cat-yellow font-semibold tracking-wider text-sm uppercase mb-1">Live Telemetry</p>
-          <h1 className="text-4xl font-light tracking-tight text-white">Machine <span className="font-bold">EXC001</span></h1>
+          <p className="text-cat-yellow font-semibold tracking-widest text-xs uppercase mb-1">Live Operations · EXC001</p>
+          <h1 className="text-3xl font-bold text-white">Smart Operator <span className="text-cat-yellow">Dashboard</span></h1>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
-            <Thermometer className="text-cat-yellow w-5 h-5" />
-            <span className="font-medium text-gray-200">22�C</span>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
-            <Wind className="text-cat-yellow w-5 h-5" />
-            <span className="font-medium text-gray-200">14 km/h</span>
-          </div>
-        </div>
-      </header>
-      
-      {/* Live Truck Simulator */}
-      <div className="mb-8">
-        <TruckSimulator onTelemetryChange={onTelemetryChange} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TaskCard 
-            title="Trenching - Sector 4"
-            eta="52"
-            shap="Wet soil (+18m) � Cloudy (+2m)"
-            status="In Progress"
-            progress={65}
-          />
-          <TaskCard 
-            title="Loading - Sector 2"
-            eta="30"
-            shap="Dry soil � Normal load"
-            status="Scheduled"
-            progress={0}
-          />
-        </div>
-        
-        <div className="bg-white/5 border border-white/10 p-6 rounded-3xl shadow-xl flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <Zap className="text-cat-yellow w-5 h-5" />
-            <h3 className="text-lg font-semibold text-gray-200">Fuel Efficiency</h3>
-          </div>
-          <div className="flex-1 min-h-[150px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorEff" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FFB81C" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#FFB81C" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <Tooltip contentStyle={{backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff'}} itemStyle={{color: '#FFB81C'}} />
-                <Area type="monotone" dataKey="efficiency" stroke="#FFB81C" strokeWidth={3} fillOpacity={1} fill="url(#colorEff)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 text-center">
-            <span className="text-3xl font-light text-white">91</span><span className="text-gray-400 text-sm ml-1">Score</span>
-          </div>
+        <div className="text-right">
+          <div className="text-2xl font-mono text-white">{time.toLocaleTimeString()}</div>
+          <div className="text-gray-500 text-xs">{time.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
         </div>
       </div>
 
-      <div className="mt-auto mx-auto w-full max-w-4xl pb-6">
-        <VoiceAgent />
+      {/* KPI strip */}
+      <div className="grid grid-cols-4 gap-4">
+        {stats.map(s => (
+          <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background:`${s.color}22` }}>
+              <s.icon size={18} style={{ color: s.color }} />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">{s.value}</div>
+              <div className="text-gray-500 text-xs">{s.label}</div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Simulator */}
+      <TruckSimulator onTelemetryChange={onTelemetryChange} />
+
+      {/* Charts */}
+      <div className="grid grid-cols-2 gap-5">
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap size={14} className="text-cat-yellow" />
+            <span className="text-white font-medium text-sm">Fuel Usage by Machine (L)</span>
+          </div>
+          <ResponsiveContainer width="100%" height={150}>
+            <BarChart data={fuelData} barSize={26}>
+              <XAxis dataKey="machine_id" stroke="#374151" tick={{fill:'#6b7280',fontSize:11}} />
+              <YAxis stroke="#374151" tick={{fill:'#6b7280',fontSize:11}} />
+              <Tooltip contentStyle={{background:'#111',border:'1px solid #374151',borderRadius:8}} itemStyle={{color:'#FFB81C'}} />
+              <Bar dataKey="fuel_used_l" radius={[5,5,0,0]}>
+                {fuelData.map((_,i)=><Cell key={i} fill={i===2?'#ef4444':'#FFB81C'}/>)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp size={14} className="text-cat-yellow" />
+            <span className="text-white font-medium text-sm">Efficiency Score (Today)</span>
+          </div>
+          <div className="text-3xl font-light text-white mb-2">91 <span className="text-gray-500 text-base">/ 100</span></div>
+          <ResponsiveContainer width="100%" height={120}>
+            <AreaChart data={effData}>
+              <defs>
+                <linearGradient id="effGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#FFB81C" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#FFB81C" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <Tooltip contentStyle={{background:'#111',border:'1px solid #374151',borderRadius:8}} itemStyle={{color:'#FFB81C'}} />
+              <Area type="monotone" dataKey="score" stroke="#FFB81C" strokeWidth={2.5} fill="url(#effGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Voice agent */}
+      <VoiceAgent />
     </div>
   );
 }

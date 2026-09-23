@@ -1,0 +1,87 @@
+CAT 320 EXCAVATOR — TROUBLESHOOTING GUIDE
+
+ENGINE PROBLEMS
+
+PROBLEM: Engine cranks but will not start in cold weather.
+CAUSE: Insufficient glow plug preheat time, waxed fuel, low battery voltage.
+SOLUTION: Wait 30 seconds for glow plug indicator to go out before cranking. Use winter grade diesel (ULSD with cold flow improver). Check battery voltage — must be above 22V for reliable starting. If temperature is below minus 10 degrees Celsius, use engine block heater for 2 hours before starting.
+
+PROBLEM: Engine starts then immediately stalls.
+CAUSE: Air in fuel system, clogged fuel filter, low fuel, faulty fuel shutoff solenoid.
+SOLUTION: Check fuel level. Replace fuel filter. Bleed air from fuel system using hand primer pump. Test fuel shutoff solenoid voltage — should be 24V when key is on.
+
+PROBLEM: Engine loses power under load.
+CAUSE: Clogged air filter, clogged fuel filter, turbocharger issue, high altitude operation.
+SOLUTION: Check air filter restriction indicator. Replace fuel filter. Check turbocharger inlet for obstruction. At altitudes above 3,000 metres, derate power expectation by 10% per 1,000 m.
+
+PROBLEM: Engine overheating — temperature gauge in red zone.
+CAUSE: Low coolant, clogged radiator, broken fan belt, faulty thermostat, coolant leak, blocked air flow to radiator.
+SOLUTION: Stop work immediately. Idle for 2 minutes then shut down. Do not open radiator cap when hot. Allow 20 minutes to cool. Check coolant level in overflow bottle. Inspect radiator fins for mud or debris blockage and clean with compressed air. Inspect fan belt for breakage or slippage. If coolant is consistently low, check for leaks at hoses, radiator, water pump, and cylinder head gasket.
+
+PROBLEM: Excessive black smoke from exhaust.
+CAUSE: Clogged air filter, over-fuelling, engine overload, fuel injector issue.
+SOLUTION: Replace air filter. Reduce operating load. Check fuel injection pressure with Cat ET diagnostic tool. Inspect turbocharger for damage.
+
+PROBLEM: Blue or grey smoke from exhaust.
+CAUSE: Engine burning oil — worn piston rings, worn valve stem seals, crankcase overfilled.
+SOLUTION: Check engine oil level — if above MAX mark, drain excess. If oil level is correct, engine requires internal inspection. Monitor oil consumption — more than 0.5 L per 8-hour shift is excessive.
+
+PROBLEM: White smoke from exhaust after warm-up.
+CAUSE: Coolant entering combustion — blown head gasket, cracked cylinder head.
+SOLUTION: Stop operation. Check if coolant level drops without visible leak. Check for bubbles in coolant overflow tank. Do not operate until repaired — engine damage will result.
+
+HYDRAULIC PROBLEMS
+
+PROBLEM: All hydraulic functions slow or weak.
+CAUSE: Low hydraulic oil, clogged hydraulic filter, pump worn or damaged, cold oil, relief valve set too low.
+SOLUTION: Check hydraulic oil level at sight glass. Replace hydraulic filter. Allow 5-minute warm-up idle in cold weather. Test pump output pressure with Cat ET — should be 34,300 kPa maximum. Adjust relief valve if below specification.
+
+PROBLEM: One hydraulic function slow, others normal.
+CAUSE: Spool valve sticking, control valve orifice blocked, cylinder seal leaking internally.
+SOLUTION: Cycle the affected function rapidly several times to free sticking spool. Inspect control valve for contamination. Check cylinder for internal bypass — hold pressure on cylinder and check for slow drift.
+
+PROBLEM: Boom drops slowly when parked with engine off.
+CAUSE: Boom anti-drop valve leaking, boom cylinder seal bypassing, load-holding valve worn.
+SOLUTION: Test anti-drop valve — apply load, shut down, observe drift rate. More than 50 mm drop in 5 minutes is excessive. Replace anti-drop valve or cylinder seals.
+
+PROBLEM: Hydraulic oil temperature warning — alarm sounds.
+CAUSE: Low oil level, contaminated or degraded oil, clogged oil cooler, excessive slipping, very hot ambient temperature.
+SOLUTION: Stop productive work. Idle at low RPM to circulate oil through cooler. Check oil level and condition — if oil looks milky or dark and burnt smelling, change it. Clean oil cooler fins. If ambient temperature is above 40 degrees Celsius, reduce production intensity.
+
+PROBLEM: Hydraulic hose burst or leak.
+CAUSE: Age deterioration, abrasion, over-pressurisation, pinching.
+SOLUTION: Stop immediately — do not approach spraying hydraulic fluid. High-pressure hydraulic fluid injection injuries are life-threatening. Shut down all hydraulic functions. Wait for pressure to drop. Use cardboard or wood — never your hand — to locate spray. Replace damaged hose with genuine CAT hose of correct pressure rating.
+
+TRAVEL PROBLEMS
+
+PROBLEM: Machine pulls to one side during travel.
+CAUSE: Unequal track tension, worn sprocket on one side, difference in travel motor pressure between sides, one track brake dragging.
+SOLUTION: Check and equalise track tension on both sides. Inspect drive sprockets for wear. Test travel motor pressure on each side with Cat ET. Release and re-test parking brake.
+
+PROBLEM: Track comes off the rollers.
+CAUSE: Track too loose, worn idler or rollers, operation on rocky terrain, sharp turns at high speed.
+SOLUTION: Stop immediately — do not attempt to drive back on. Adjust track tension — correct sag is 10-15 mm. Replace worn idler or rollers. Avoid sharp pivot turns at maximum speed.
+
+PROBLEM: Abnormal noise from travel drive.
+CAUSE: Low final drive oil, worn bearings, damaged ring gear, foreign object in track.
+SOLUTION: Check final drive oil level through inspection plug. Listen for bearing rumble vs gear knock. Inspect track for stones or debris. Call technician if noise is metallic.
+
+SWING PROBLEMS
+
+PROBLEM: Swing is slow or jerky.
+CAUSE: Low swing motor case drain, swing brake dragging, contaminated swing motor.
+SOLUTION: Check swing motor case drain flow. Test swing motor brake release pressure. Change swing drive oil if contaminated.
+
+PROBLEM: Machine swings past target position.
+CAUSE: Operator technique, damaged swing brake, worn swing bearing.
+SOLUTION: Practice feathering the swing control. Test swing brake hold — machine should not swing when control is released. Measure swing bearing play — replace if over 3 mm.
+
+ELECTRICAL PROBLEMS
+
+PROBLEM: Battery goes flat overnight.
+CAUSE: Parasitic drain, failing battery, alternator not charging, keyswitch left on.
+SOLUTION: Test battery open circuit voltage — below 24V indicates discharged or failing battery. Test alternator output — should be 27.5 to 28.5V with engine running. Check for components left switched on. Isolate battery with main disconnect if machine is parked for more than 3 days.
+
+PROBLEM: Cat Grade monitor shows error codes.
+CAUSE: Sensor fault, GPS signal lost, software needs update, connector corrosion.
+SOLUTION: Note error code and reference Cat fault code list. Check GPS antenna for damage. Clean all external connector pins. Download latest software via Cat Connect.
