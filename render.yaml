@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cat-smart-operator
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: OLLAMA_TEXT_MODEL
+        value: qwen2.5:7b
+      - key: OLLAMA_VISION_MODEL
+        value: qwen2.5vl:7b
+      - key: NODE_ENV
+        value: production
+    plan: free
