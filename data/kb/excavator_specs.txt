@@ -1,0 +1,8 @@
+EXCAVATOR 320 SPECIFICATIONS:
+Operating Weight: 22,500 kg (49,600 lbs).
+Engine Model: CAT C4.4 ACERT. Net Power: 164 HP (122 kW).
+Maximum Digging Depth: 6.7 meters (22 feet).
+Maximum Reach at Ground Level: 9.8 meters (32 feet).
+Fuel Tank Capacity: 345 Liters (91 Gallons).
+DEF Tank Capacity: 33 Liters (8.7 Gallons).
+Track Width: 790 mm (31 inches) for standard swamp pads.

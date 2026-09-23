@@ -1,0 +1,4 @@
+TROUBLESHOOTING ALARMS:
+Hydraulic Temperature High (Alarm Code E360): The hydraulic fluid has exceeded 95°C (203°F). Stop operations immediately. Cycle the boom without load at low idle to cool the fluid. Check the hydraulic oil cooler for debris blockages.
+Low Engine Oil Pressure (Alarm Code E100): Stop engine immediately. Check dipstick. If level is normal, the oil pump or sensor may be faulty. Do not restart.
+Water in Fuel (Alarm Code E233): Drain the fuel/water separator bowl located in the rear pump compartment.

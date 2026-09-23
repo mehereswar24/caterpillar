@@ -1,0 +1,7 @@
+MAINTENANCE INTERVALS AND FLUIDS:
+Every 50 Hours: Grease the boom, stick, and bucket linkages. Check tire pressure or track tension.
+Every 250 Hours: Change engine oil and replace engine oil filter.
+Every 500 Hours: Replace primary and secondary fuel filters. Replace hydraulic tank breather filter.
+Every 1000 Hours: Change hydraulic oil return filter. Change final drive oil.
+Recommended Engine Oil: CAT DEO 15W-40.
+Recommended Hydraulic Fluid: CAT HYDO Advanced 10 (ISO VG 46).
