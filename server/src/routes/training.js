@@ -1,61 +1,67 @@
 const router = require('express').Router();
-const mongoose = require('mongoose');
-const TrainingProgress = require('../models/TrainingProgress');
+const { spawnSync } = require('child_process');
+const path = require('path');
 
-const _mem = {};
-const isMongoUp = () => mongoose.connection.readyState === 1;
+const PYTHON    = process.env.PYTHON_PATH || 'python';
+const MODEL_DIR = path.join(__dirname, '../../../model');
 
-const MODULES = [
-  { id:'m1', title:'Proximity Safety',     type:'simulation', description:'Identify and respond to worker proximity breaches.' },
-  { id:'m2', title:'Night Operations',     type:'video',      description:'Safe procedures for low-visibility conditions.' },
-  { id:'m3', title:'Seatbelt Compliance',  type:'quiz',       description:'Rules and importance of seatbelt use on site.' },
-  { id:'m4', title:'Slope & Tilt Safety',  type:'simulation', description:'Recognising unsafe tilt angles and safe parking.' },
-  { id:'m5', title:'Fuel Efficiency',      type:'video',      description:'Reducing idle time and improving fuel economy.' },
-  { id:'m6', title:'Pre-Shift Inspection', type:'checklist',  description:'Step-by-step machine inspection before every shift.' },
-];
+// GET /api/training/:operatorId
+router.get('/:operatorId', (req, res) => {
+  try {
+    const { operatorId } = req.params;
+    const db = req.app.get('db');
 
-// GET /training/modules
-router.get('/modules', async (req, res) => {
-  const { operator_id = 'OP001' } = req.query;
-  let progressMap = _mem[operator_id] || {};
+    const result = spawnSync(
+      PYTHON,
+      [path.join(MODEL_DIR, 'recommendations.py'), operatorId],
+      { encoding: 'utf8', timeout: 10000 }
+    );
+    if (result.error) throw result.error;
 
-  if (isMongoUp()) {
-    try {
-      const rows = await TrainingProgress.find({ operator_id }).lean();
-      rows.forEach(r => { progressMap[r.module_id] = r; });
-    } catch {}
+    let modules = [];
+    try { modules = JSON.parse(result.stdout.trim()); } catch { modules = []; }
+
+    const completions = db.prepare(
+      'SELECT module_id, score, completed_at FROM training_progress WHERE operator_id = ?'
+    ).all(operatorId);
+    const compMap = {};
+    completions.forEach(c => { compMap[c.module_id] = c; });
+
+    modules = modules.map(m => ({
+      ...m,
+      completed:    !!compMap[m.id],
+      score:        compMap[m.id]?.score || null,
+      completed_at: compMap[m.id]?.completed_at || null,
+    }));
+
+    res.json({
+      operator_id: operatorId,
+      total_modules: modules.length,
+      completed_modules: modules.filter(m => m.completed).length,
+      modules,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  const modules = MODULES.map(m => ({
-    ...m,
-    completed:    !!(progressMap[m.id]?.completed),
-    score:        progressMap[m.id]?.score || 0,
-    completed_at: progressMap[m.id]?.completed_at || null,
-  }));
-
-  const done = modules.filter(m=>m.completed).length;
-  res.json({ operator_id, modules, progress: `${done}/${MODULES.length} completed` });
 });
 
-// POST /training/complete
-router.post('/complete', async (req, res) => {
-  const { operator_id='OP001', module_id, score=100 } = req.body;
-  const completed_at = new Date();
+// POST /api/training/:operatorId/complete
+router.post('/:operatorId/complete', (req, res) => {
+  try {
+    const { operatorId } = req.params;
+    const { module_id, score } = req.body;
+    const db = req.app.get('db');
 
-  if (!_mem[operator_id]) _mem[operator_id] = {};
-  _mem[operator_id][module_id] = { module_id, score, completed: true, completed_at };
+    db.prepare(`
+      INSERT INTO training_progress (operator_id, module_id, score)
+      VALUES (?, ?, ?)
+      ON CONFLICT(operator_id, module_id) DO UPDATE SET score=excluded.score, completed_at=datetime('now')
+    `).run(operatorId, module_id, score || 100);
 
-  if (isMongoUp()) {
-    try {
-      await TrainingProgress.findOneAndUpdate(
-        { operator_id, module_id },
-        { operator_id, module_id, score, completed: true, completed_at },
-        { upsert: true, new: true }
-      );
-    } catch {}
+    res.json({ success: true, operator_id: operatorId, module_id, score });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  res.json({ status:'success', module_id, score, completed_at });
 });
 
 module.exports = router;
