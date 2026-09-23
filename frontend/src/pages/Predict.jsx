@@ -68,30 +68,30 @@ export default function Predict() {
   const rangeWidth = result ? result.confidence_range.high - result.confidence_range.low : 0;
 
   return (
-    <div className="p-8 h-full overflow-auto">
-      <div className="mb-8">
-        <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">RF + XGBoost Ensemble · 20 Features · Confidence Range</p>
-        <h1 className="text-3xl font-bold text-white">Task Time <span className="text-cat-yellow">Predictor</span></h1>
+    <div className="cat-page">
+      <div className="cat-stripe-bar rounded-full"/>
+      <div>
+        <div className="cat-label mb-1">RF + XGBoost Ensemble · 20 Features · Confidence Range</div>
+        <h1 className="cat-title">Task Time <span className="text-cat-yellow">Predictor</span></h1>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Form */}
         <div className="space-y-4">
           {SECTIONS.map(sec=>(
-            <div key={sec.label} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-              <div className="text-cat-yellow text-xs font-bold uppercase tracking-widest mb-4">{sec.label}</div>
+              <div key={sec.label} className="cat-card p-5">
+                <div className="cat-label mb-4">{sec.label}</div>
               <div className="grid grid-cols-2 gap-3">
                 {sec.fields.map(k=>(
                   <div key={k}>
                     <label className="text-gray-500 text-xs block mb-1 capitalize">{k.replace(/_/g,' ')}</label>
                     {OPTIONS[k]
-                      ? <select value={form[k]} onChange={e=>set(k,e.target.value)}
-                          className="w-full bg-gray-800 border border-gray-700 text-white text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-cat-yellow">
+                      ? <select value={form[k]} onChange={e=>set(k,e.target.value)} className="cat-select">
                           {OPTIONS[k].map(o=><option key={o}>{o}</option>)}
                         </select>
                       : <input type="number" value={form[k]}
                           onChange={e=>set(k,parseFloat(e.target.value)||0)}
-                          className="w-full bg-gray-800 border border-gray-700 text-white text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-cat-yellow"/>
+                          className="cat-input"/>
                     }
                   </div>
                 ))}
@@ -99,8 +99,7 @@ export default function Predict() {
             </div>
           ))}
 
-          <button onClick={predict} disabled={loading}
-            className="w-full bg-cat-yellow text-black font-bold py-3.5 rounded-xl hover:bg-yellow-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+          <button onClick={predict} disabled={loading} className="cat-btn w-full flex items-center justify-center gap-2 text-sm">
             {loading ? <><Loader size={16} className="animate-spin"/> Predicting...</> : <><TrendingUp size={16}/> Predict Task Time</>}
           </button>
         </div>

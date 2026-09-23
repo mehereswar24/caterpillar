@@ -118,7 +118,7 @@ export default function Safety({ liveData }) {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Gauges */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="cat-card p-5">
             <div className="text-white font-semibold text-xs uppercase tracking-wider mb-4">Live Telemetry</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <Gauge label="Engine RPM"  value={t.rpm}       min={600} max={2500} unit="rpm" warn={1900} danger={2100} icon="⚙️"/>
@@ -149,7 +149,7 @@ export default function Safety({ liveData }) {
           </div>
 
           {/* Vision AI */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="cat-card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Camera size={15} className="text-cat-yellow"/>
               <span className="text-white font-semibold text-sm">Vision AI — Qwen2.5-VL:7b</span>
@@ -174,7 +174,7 @@ export default function Safety({ liveData }) {
 
         {/* Right column */}
         <div className="space-y-5">
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="cat-card p-5">
             <div className="text-white font-semibold text-sm mb-4">Proximity Radar</div>
             <ProximityRadar distance={t.workers>0?'1.8':'8.0'}/>
             <div className="mt-4 bg-gray-800 rounded-xl p-3">
@@ -188,7 +188,7 @@ export default function Safety({ liveData }) {
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="cat-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <Camera size={13} className="text-gray-500"/>
               <span className="text-white font-medium text-sm">Cab Camera</span>

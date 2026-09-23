@@ -65,15 +65,16 @@ export default function Anomaly() {
     : [];
 
   return (
-    <div className="p-8 h-full overflow-auto">
+    <div className="cat-page">
       <div className="mb-8">
-        <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">LightGBM Classifier · F1 0.9947</p>
-        <h1 className="text-3xl font-bold text-white">Anomaly <span className="text-cat-yellow">Detection</span></h1>
+        <div className="cat-stripe-bar rounded-full"/>
+      <div><div className="cat-label mb-1">LightGBM Classifier · F1 0.9947</div>
+        <h1 className="cat-title">Anomaly <span className="text-cat-yellow">Detection</span></h1></div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Live detector */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+        <div className="cat-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <Activity size={18} className="text-cat-yellow" />
             <span className="font-semibold text-white">Live Telemetry Classifier</span>
@@ -131,7 +132,7 @@ export default function Anomaly() {
         </div>
 
         {/* Probability distribution */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+        <div className="cat-card p-6">
           <div className="flex items-center gap-2 mb-5">
             <Zap size={18} className="text-cat-yellow" />
             <span className="font-semibold text-white">Class Probability Distribution</span>
@@ -155,7 +156,7 @@ export default function Anomaly() {
 
       {/* Weekly trend + live scan */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <div className="cat-card p-5">
           <div className="font-semibold text-white mb-4 text-sm">7-Day Anomaly History</div>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={WEEK_DATA} barSize={28}>
@@ -169,7 +170,7 @@ export default function Anomaly() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <div className="cat-card p-5">
           <div className="font-semibold text-white mb-3 text-sm">Live Machine Scan Results</div>
           {scanData.length === 0
             ? <div className="flex items-center gap-2 text-green-400 text-sm mt-4"><CheckCircle size={16}/> All machines nominal</div>

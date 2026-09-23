@@ -52,11 +52,12 @@ export default function Supervisor() {
   const selectedM       = machines.find(m=>m.machine_id===selected);
 
   return (
-    <div className="p-8 h-full overflow-auto">
+    <div className="cat-page">
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">Live Fleet · 5 Machines</p>
-          <h1 className="text-3xl font-bold text-white">Fleet <span className="text-cat-yellow">Supervisor</span></h1>
+          <div className="cat-stripe-bar rounded-full"/>
+          <div><div className="cat-label mb-1">Live Fleet · 5 Machines</div>
+          <h1 className="cat-title">Fleet <span className="text-cat-yellow">Supervisor</span></h1></div>
         </div>
         <button onClick={load} className="flex items-center gap-2 text-gray-400 hover:text-white text-xs transition">
           <RefreshCw size={14} className={loading?'animate-spin':''}/> Refresh
@@ -71,7 +72,7 @@ export default function Supervisor() {
           { label:'Operators',      value:operators.length||5, color:'#60a5fa', Icon:Shield },
           { label:'Active Alerts',  value:totalCritical,  color:'#ef4444', Icon:AlertTriangle },
         ].map(s=>(
-          <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-3">
+          <div key={s.label} className="cat-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:`${s.color}22`}}>
               <s.Icon size={18} style={{color:s.color}}/>
             </div>
@@ -85,7 +86,7 @@ export default function Supervisor() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Site map */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <div className="cat-card p-5">
           <div className="text-white font-semibold text-sm mb-3">Site Map</div>
           <div className="relative bg-gray-950 rounded-xl border border-gray-800" style={{height:220}}>
             {[25,50,75].map(p=>(
@@ -124,7 +125,7 @@ export default function Supervisor() {
         </div>
 
         {/* Machine detail */}
-        <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <div className="lg:col-span-2 cat-card p-5">
           {!selectedM
             ? <div className="h-full flex items-center justify-center text-gray-600 text-sm">Click a machine on the map</div>
             : <>
@@ -181,7 +182,7 @@ export default function Supervisor() {
 
       {/* Alerts */}
       {alerts.length>0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-6">
+        <div className="cat-card p-5 mb-6">
           <div className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
             <AlertTriangle size={15} className="text-red-400"/> Active Alerts ({alerts.length})
           </div>
@@ -203,7 +204,7 @@ export default function Supervisor() {
 
       {/* Operators table */}
       {operators.length>0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <div className="cat-card p-5">
           <div className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
             <Users size={15} className="text-cat-yellow"/> Operator Performance
           </div>

@@ -1,3 +1,113 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    background-color: #0a0a0a;
+    color: #e8e8e8;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #FFB81C; color: #000; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #FFB81C55; }
+}
+
+@layer components {
+  /* CAT Card */
+  .cat-card {
+    @apply bg-cat-gray border border-cat-border rounded-2xl;
+  }
+  /* CAT Section label */
+  .cat-label {
+    @apply text-cat-yellow text-xs font-bold uppercase tracking-widest;
+  }
+  /* CAT Page title */
+  .cat-title {
+    @apply text-3xl font-bold text-white;
+  }
+  /* CAT stripe accent bar */
+  .cat-stripe-bar {
+    height: 3px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #FFB81C 0px, #FFB81C 12px,
+      #000    12px, #000    20px
+    );
+  }
+  /* Primary button */
+  .cat-btn {
+    @apply bg-cat-yellow text-black font-extrabold py-3 px-6 rounded-xl
+           hover:bg-yellow-400 transition-all duration-200 active:scale-95
+           disabled:opacity-40 disabled:cursor-not-allowed;
+    box-shadow: 0 0 20px rgba(255,184,28,0.2);
+  }
+  /* Ghost button */
+  .cat-btn-ghost {
+    @apply border border-cat-border text-gray-400 font-medium py-2 px-4 rounded-xl
+           hover:border-cat-yellow/50 hover:text-white transition-all duration-200;
+  }
+  /* Stat chip */
+  .cat-stat {
+    @apply cat-card p-4 flex items-center gap-3;
+  }
+  /* Page wrapper */
+  .cat-page {
+    @apply p-7 h-full overflow-auto; background-image: radial-gradient(ellipse at 20% 0%,rgba(255,184,28,0.04) 0%,transparent 60%);
+  }
+  /* Page header */
+  .cat-header {
+    @apply flex items-end justify-between;
+  }
+  /* Input */
+  .cat-input {
+    @apply w-full bg-cat-darker border border-cat-border text-white text-sm px-3 py-2.5
+           rounded-xl focus:outline-none focus:border-cat-yellow/60 transition-colors;
+  }
+  /* Select */
+  .cat-select {
+    @apply cat-input appearance-none cursor-pointer;
+  }
+  /* Badge */
+  .cat-badge {
+    @apply text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide;
+  }
+}
+
+/* Animated yellow top border on hover cards */
+.hover-card {
+  position: relative;
+  overflow: hidden;
+}
+.hover-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFB81C, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hover-card:hover::before { opacity: 1; }
+
+/* Glow pulse on critical alerts */
+@keyframes criticalPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+.critical-pulse { animation: criticalPulse 1.5s ease-in-out infinite; }
+
+/* Scanning animation */
+@keyframes scanLine {
+  0%   { transform: translateY(-100%); opacity: 0.6; }
+  100% { transform: translateY(400px); opacity: 0; }
+}
+.scan-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFB81C, transparent);
+  animation: scanLine 2s ease-in-out infinite;
+}

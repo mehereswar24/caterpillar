@@ -47,11 +47,12 @@ export default function Maintenance() {
   const high     = Object.values(data).filter(d=>d.urgency==='high').length;
 
   return (
-    <div className="p-8 h-full overflow-auto">
+    <div className="cat-page">
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">LightGBM Predictor · Live Telemetry</p>
-          <h1 className="text-3xl font-bold text-white">Maintenance <span className="text-cat-yellow">Intelligence</span></h1>
+          <div className="cat-stripe-bar rounded-full"/>
+          <div><div className="cat-label mb-1">LightGBM Predictor · Live Telemetry</div>
+          <h1 className="cat-title">Maintenance <span className="text-cat-yellow">Intelligence</span></h1></div>
         </div>
         <div className="flex items-center gap-3">
           {critical>0 && <span className="bg-red-900 text-red-300 border border-red-700 px-3 py-1 rounded-full text-xs font-bold">{critical} Critical</span>}
@@ -68,7 +69,7 @@ export default function Maintenance() {
           const d = data[mid];
           if (!d && !loading) return null;
           if (loading) return (
-            <div key={mid} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 animate-pulse h-44"/>
+            <div key={mid} className="cat-card p-5 animate-pulse h-44"/>
           );
           const urg = d.urgency || 'low';
           const u   = URGENCY[urg] || URGENCY.low;
@@ -101,7 +102,7 @@ export default function Maintenance() {
       </div>
 
       {/* ML Prediction form */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+      <div className="cat-card p-6">
         <div className="flex items-center gap-2 mb-5">
           <div className="w-8 h-8 bg-cat-yellow/10 rounded-lg flex items-center justify-center">
             <Wrench size={16} className="text-cat-yellow"/>

@@ -68,7 +68,7 @@ export default function Training() {
   const activeM  = modules.find(m=>m.id===active);
 
   if (activeM) return (
-    <div className="p-8 h-full overflow-auto">
+    <div className="cat-page">
       <button onClick={()=>setActive(null)} className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm transition">
         <ArrowLeft size={16}/> Back to Training Hub
       </button>
@@ -80,7 +80,7 @@ export default function Training() {
         <h1 className="text-3xl font-bold text-white mb-2">{activeM.title}</h1>
         <p className="text-gray-400 text-sm mb-6">{activeM.reason}</p>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+        <div className="cat-card p-6 mb-6">
           <div className="prose prose-invert max-w-none text-sm text-gray-300 leading-relaxed space-y-3">
             <p className="text-base">This module covers critical knowledge for safe and efficient CAT 320 excavator operation. Complete this training to improve your operator safety score.</p>
             <div className="bg-gray-800 rounded-xl p-4 border-l-4 border-cat-yellow">
@@ -115,12 +115,13 @@ export default function Training() {
     <div className="p-8 h-full overflow-auto">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-cat-yellow text-xs font-semibold uppercase tracking-widest mb-1">Personalised · Based on your alert history</p>
-        <h1 className="text-3xl font-bold text-white">Operator <span className="text-cat-yellow">Training Hub</span></h1>
+        <div className="cat-stripe-bar rounded-full"/>
+      <div><div className="cat-label mb-1">Personalised · Based on your alert history</div>
+        <h1 className="cat-title">Operator <span className="text-cat-yellow">Training Hub</span></h1></div>
       </div>
 
       {/* Progress bar */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-6">
+      <div className="cat-card p-5 mb-6">
         <div className="flex items-center justify-between mb-3">
           <span className="text-white font-semibold text-sm">Training Progress — {OPERATOR}</span>
           <span className="text-cat-yellow font-bold">{done}/{total} modules</span>
@@ -138,7 +139,7 @@ export default function Training() {
       </div>
 
       {/* AI Ask */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-6">
+      <div className="cat-card p-5 mb-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 bg-cat-yellow rounded-xl flex items-center justify-center">
             <Bot size={16} className="text-black"/>
@@ -152,14 +153,14 @@ export default function Training() {
           <input value={question} onChange={e=>setQuestion(e.target.value)}
             onKeyDown={e=>e.key==='Enter'&&askAI()}
             placeholder="e.g. How often should I grease the boom pins?"
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cat-yellow"/>
+            className="flex-1 bg-cat-darker border border-cat-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cat-yellow"/>
           <button onClick={askAI} disabled={asking||!question.trim()}
             className="bg-cat-yellow text-black px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-yellow-400 transition-all disabled:opacity-40">
             {asking ? <Loader size={14} className="animate-spin"/> : 'Ask'}
           </button>
         </div>
         {answer && (
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
+          <div className="bg-cat-darker border border-cat-border rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
             {answer}
           </div>
         )}
@@ -168,7 +169,7 @@ export default function Training() {
       {/* Module cards */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3,4,5,6].map(i=><div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl h-40 animate-pulse"/>)}
+          {[1,2,3,4,5,6].map(i=><div key={i} className="cat-card h-40 animate-pulse"/>)}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
