@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Models — large binaries, regenerate with train scripts
+models/*.txt
+models/*.pkl
+
+# Data — regenerate with generate_dataset.py
+operator_sessions.csv
+data/operator_sessions.csv
+data/*.db
+data/incidents.csv
+data/maintenance_log.csv
+data/proximity_events.csv
+data/training_completions.csv
+
+# SQLite
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

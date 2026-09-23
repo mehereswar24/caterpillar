@@ -1,0 +1,17 @@
+GRAMMAR = {
+    r"(how long|estimate|duration).*(task|dig|trench|load)": "task.estimate",
+    r"(log|record).*(incident|event|hazard|alert)":           "safety.log_incident",
+    r"(fault|error|warning|diagnostic|what.*wrong)":          "machine.fault_check",
+    r"(idle|idling|wasting fuel)":                            "anomaly.idle_check",
+    r"(pre.?shift|inspection|checklist|walkround)":           "safety.preshift",
+    r"(safety score|how.*doing|my performance)":              "operator.safety_score",
+    r"(service|maintenance|filter|oil|next service)":         "machine.maintenance",
+    r"(weather|rain|temperature|forecast)":                   "environment.weather",
+    r"(break|rest|tired|fatigue)":                            "operator.break",
+    r"(seatbelt|belt|buckle)":                                "safety.seatbelt_check",
+    r"(supervisor|call|contact|manager)":                     "comms.supervisor",
+    r"(fuel|how much fuel|range)":                            "machine.fuel_status",
+    r"(training|module|course|lesson)":                       "training.open",
+    r"(anomaly|unusual|anything wrong|report)":               "anomaly.report",
+    r"(shift.*over|end.*shift|finish)":                       "operator.end_shift",
+}
