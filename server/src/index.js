@@ -95,21 +95,38 @@ app.use('/api/anomaly',       require('./routes/anomaly'));
 app.use('/api/maintenance',   require('./routes/maintenance'));
 app.use('/api/voice',         require('./routes/voice'));
 app.use('/api/vision',        require('./routes/vision'));
-app.use('/api/auth',          require('./routes/auth'));
+app.use('/api/auth',           require('./routes/auth'));
+app.use('/api/fuel',           require('./routes/fuel'));
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({
   message: 'CAT Smart Operator API is running.',
-  stack: 'Node.js + Express + SQLite + Python ML',
+  stack: 'Node.js + Express + SQLite',
   endpoints: [
     'GET  /api/dashboard',
     'GET  /api/tasks',
     'GET  /api/machines',
     'GET  /api/operators',
     'GET  /api/safety-alerts',
-    'POST /api/predict',
+    'POST /api/predict              ← Task Time (RF+XGBoost ensemble)',
+    'POST /api/anomaly/detect       ← Anomaly Classifier (LightGBM, 7 classes)',
+    'GET  /api/anomaly/scan',
+    'POST /api/maintenance/predict  ← Maintenance Predictor (LightGBM)',
+    'GET  /api/maintenance/status',
     'GET  /api/training/:operatorId',
+    'POST /api/training/:operatorId/complete',
+    'GET  /api/alerts',
     'POST /api/alerts/:id/acknowledge',
+    'POST /api/voice/ask            ← RAG + Qwen2.5:7b',
+    'POST /api/vision/analyze       ← Qwen2.5-VL:7b',
+    'POST /api/vision/seatbelt',
+    'POST /api/vision/proximity',
+    'POST /api/vision/fatigue',
+    'POST /api/vision/preshift',
+    'POST /api/auth/face            ← Face Authentication',
+    'GET  /api/auth/operators',
+    'GET  /api/auth/session/:machine_id',
+    'POST /api/auth/override',
   ],
 }));
 
