@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0a] text-gray-100 font-sans antialiased;
+  }
+}
+
+/* Custom scrollbar for dark industrial feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FFB81C;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Professional Industrial Cockpit Edge Warning Strobe */
+@keyframes perimeter-strobe {
+  0%, 100% {
+    opacity: 0.2;
+    box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.35), inset 0 0 70px rgba(185, 28, 28, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: inset 0 0 65px rgba(239, 68, 68, 0.85), inset 0 0 130px rgba(220, 38, 38, 0.5);
+  }
+}
+
+.animate-perimeter-strobe {
+  animation: perimeter-strobe 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
