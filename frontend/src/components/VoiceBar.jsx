@@ -15,7 +15,7 @@ export default function VoiceBar() {
       setTimeout(async () => {
         setTranscript('how long will this trench take?');
         try {
-          const res = await fetch('http://localhost:5000/voice/respond', {
+          const res = await fetch('https://caterpillar-stack.onrender.com/voice/respond', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({

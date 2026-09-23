@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, MapPin, RefreshCw } from 'lucide-react';
 
-const API = 'http://localhost:5000';
+const API = 'https://caterpillar-stack.onrender.com';
 const HEALTH_COLORS = { good: 'text-green-400', warning: 'text-orange-400', critical: 'text-red-400' };
 const STATUS_BG = { active: 'bg-green-900/40 border-green-700', idle: 'bg-yellow-900/30 border-yellow-700' };
 

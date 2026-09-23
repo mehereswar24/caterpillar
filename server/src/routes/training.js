@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { spawnSync } = require('child_process');
 const path = require('path');
 
-const PYTHON    = process.env.PYTHON_PATH || 'python';
+const PYTHON    = process.env.PYTHON_PATH || 'python3';
 const MODEL_DIR = path.join(__dirname, '../../../model');
 
 // GET /api/training/:operatorId

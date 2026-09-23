@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Activity } from 'lucide-react';
 
-const API = 'http://localhost:5000';
+const API = 'https://caterpillar-stack.onrender.com';
 
 const LABEL_COLORS = {
   NORMAL: '#22c55e', EXCESSIVE_IDLE: '#f97316', OVER_REV: '#ef4444',
