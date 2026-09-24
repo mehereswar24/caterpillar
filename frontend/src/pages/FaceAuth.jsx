@@ -46,31 +46,26 @@ export default function FaceAuth({ onAuthenticated }) {
     return canvasRef.current.toDataURL('image/jpeg', 0.8).split(',')[1];
   };
 
-  const scan = async () => {
+  const scan = async (forceDemo = false) => {
     setScanning(true);
     setResult(null);
-    const image = capture();
+    const image = forceDemo ? 'demo' : (capture() || 'demo');
     try {
       const r = await fetch(API + '/api/auth/face', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: image || 'demo', machine_id: machine }),
+        body: JSON.stringify({ image, machine_id: machine }),
       });
-
       const data = await r.json();
       setResult(data);
       if (data.approved) {
         setTimeout(() => { stopCamera(); onAuthenticated?.(data); }, 2000);
       }
     } catch {
-      // Demo fallback
       const demo = {
-        approved: true, 
-        result: 'APPROVED', 
-        match_score: 82, 
-        machine_id: machine,
+        approved: true, result: 'APPROVED', match_score: 82, machine_id: machine,
         operator: { id: 'OP001', name: 'Rajan Kumar', skill: 'expert', assigned_machines: 'EXC001,EXC002' },
-        assignment_valid: true, 
+        assignment_valid: true,
         message: 'Welcome, Rajan Kumar. Machine ' + machine + ' unlocked.',
       };
       setResult(demo);
@@ -196,7 +191,7 @@ export default function FaceAuth({ onAuthenticated }) {
               </button>
             )}
             {/* Demo login — always works */}
-            <button onClick={scan} disabled={scanning}
+            <button onClick={() => scan(true)} disabled={scanning}
               className="w-full border border-cat-yellow/30 text-cat-yellow/70 py-2.5 rounded-xl text-sm font-semibold hover:bg-cat-yellow/10 hover:text-cat-yellow transition-all flex items-center justify-center gap-2 disabled:opacity-40">
               <ScanFace size={15}/> Demo Login (no camera)
             </button>
