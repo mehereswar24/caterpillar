@@ -145,4 +145,22 @@ router.post('/transcribe', (req, res) => {
   res.json({ transcript: req.body.text || '', note: 'Use browser Web Speech API for live transcription.' });
 });
 
+// POST /api/voice/safety-check — quick safety keyword check
+router.post('/safety-check', (req, res) => {
+  const { question = '' } = req.body;
+  const q = question.toLowerCase();
+  const SAFETY_KEYWORDS = ['proximity','breach','seatbelt','fire','rollover','gas','struck','crush','tilt','slope','overheat','pressure','flood','emergency'];
+  const triggered = SAFETY_KEYWORDS.filter(k => q.includes(k));
+  const hits = retrieve(question, 3);
+  res.json({
+    question,
+    safety_triggered: triggered.length > 0,
+    keywords_matched: triggered,
+    relevant_sections: hits.map(h => ({ source: h.source, text: h.text })),
+    recommendation: triggered.length > 0
+      ? `SAFETY ALERT: ${triggered[0].toUpperCase()} detected. ${hits[0]?.text || 'Stop machine and assess.'}`
+      : 'No immediate safety concern detected.',
+  });
+});
+
 module.exports = router;
