@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, MessageSquare, Loader, BookOpen, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, MessageSquare, Loader, BookOpen, AlertCircle, Radio } from 'lucide-react';
 import { API } from '../api.js';
 
 const QUICK_QUESTIONS = [
@@ -33,27 +33,44 @@ function speak(text) {
   const eng = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'))
            || voices.find(v => v.lang.startsWith('en')) || null;
   if (eng) utt.voice = eng;
-  // 120ms delay prevents Chrome from cutting the first word
   setTimeout(() => window.speechSynthesis.speak(utt), 120);
 }
 
-export default function VoiceAgent({ operatorContext }) {
-  const [question,  setQuestion]  = useState('');
-  const [answer,    setAnswer]    = useState('');
-  const [sources,   setSources]   = useState([]);
-  const [loading,   setLoading]   = useState(false);
-  const [listening, setListening] = useState(false);
-  const [ttsOn,     setTtsOn]     = useState(true);
-  const [history,   setHistory]   = useState([]);
-  const [sttError,  setSttError]  = useState('');
-  const [sttAvail,  setSttAvail]  = useState(true);
+async function transcribeWithWhisper(blob) {
+  const form = new FormData();
+  form.append('audio', blob, 'recording.webm');
+  const r = await fetch(`${API}/api/whisper/transcribe`, { method: 'POST', body: form });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || 'Whisper failed');
+  return d.transcript;
+}
 
-  const recogRef = useRef(null);
-  const ttsRef   = useRef(true);
-  // Keep ttsRef in sync so STT closure always sees latest ttsOn
+export default function VoiceAgent({ operatorContext }) {
+  const [question,     setQuestion]     = useState('');
+  const [answer,       setAnswer]       = useState('');
+  const [sources,      setSources]      = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [listening,    setListening]    = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [ttsOn,        setTtsOn]        = useState(true);
+  const [history,      setHistory]      = useState([]);
+  const [sttError,     setSttError]     = useState('');
+  const [whisperMode,  setWhisperMode]  = useState(true);
+
+  const mediaRecRef = useRef(null);
+  const chunksRef   = useRef([]);
+  const recogRef    = useRef(null);
+  const ttsRef      = useRef(true);
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
 
-  // ── ask — stable reference via useCallback ───────────────────────────────
+  // Pre-load TTS voices
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }, []);
+
+  // ── ask ──────────────────────────────────────────────────────────────────
   const ask = useCallback(async (q) => {
     const text = (q || '').trim();
     if (!text) return;
@@ -76,63 +93,70 @@ export default function VoiceAgent({ operatorContext }) {
     setLoading(false);
   }, [operatorContext]);
 
-  // ── STT setup — re-runs when ask changes ─────────────────────────────────
+  // ── Web Speech setup ──────────────────────────────────────────────────────
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { setSttAvail(false); return; }
+    if (!SR) return;
     const r = new SR();
     r.continuous = false; r.interimResults = false; r.lang = 'en-US';
-    r.onresult = (e) => {
-      const t = e.results[0][0].transcript;
-      setQuestion(t);
+    r.onresult = (e) => { const t = e.results[0][0].transcript; setQuestion(t); setListening(false); ask(t); };
+    r.onerror  = (e) => {
       setListening(false);
-      ask(t);                     // ask now has stable reference — no stale closure
-    };
-    r.onerror = (e) => {
-      setListening(false);
-      const m = {
-        'not-allowed': 'Mic permission denied — allow it in browser settings.',
-        'no-speech':   'No speech detected. Try again.',
-        'network':     'Network error during speech recognition.',
-      };
-      setSttError(m[e.error] || 'STT error: ' + e.error);
+      const m = { 'not-allowed': 'Mic denied.', 'no-speech': 'No speech.', 'network': 'Network error — switch to Whisper mode.' };
+      setSttError(m[e.error] || 'STT: ' + e.error);
     };
     r.onend = () => setListening(false);
     recogRef.current = r;
   }, [ask]);
 
-  // Pre-load TTS voices (Chrome lazy-loads them)
-  useEffect(() => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-  }, []);
-
-  // ── toggleMic — with error handling ──────────────────────────────────────
-  const toggleMic = () => {
-    if (!recogRef.current) {
-      setSttError('Speech recognition not available. Use Chrome or Edge.');
+  // ── Whisper mic (hold to record, release to transcribe) ──────────────────
+  const toggleWhisperMic = async () => {
+    if (listening) {
+      mediaRecRef.current?.stop();
       return;
     }
-    if (listening) {
-      recogRef.current.stop();
-      setListening(false);
-    } else {
-      setSttError('');
-      try {
-        recogRef.current.start();
-        setListening(true);
-      } catch {
-        // Already started — abort and retry once
-        recogRef.current.abort();
-        setTimeout(() => {
-          try { recogRef.current.start(); setListening(true); } catch {}
-        }, 300);
-      }
+    setSttError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunksRef.current = [];
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+      const rec = new MediaRecorder(stream, { mimeType });
+      rec.ondataavailable = e => { if (e.data.size) chunksRef.current.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        setListening(false);
+        setTranscribing(true);
+        try {
+          const blob = new Blob(chunksRef.current, { type: mimeType });
+          const text = await transcribeWithWhisper(blob);
+          setQuestion(text);
+          ask(text);
+        } catch (e) {
+          setSttError('Whisper: ' + e.message);
+        }
+        setTranscribing(false);
+      };
+      mediaRecRef.current = rec;
+      rec.start();
+      setListening(true);
+    } catch (e) {
+      setSttError('Mic access denied: ' + e.message);
     }
   };
 
-  const isSafety = answer.startsWith('SAFETY ALERT');
+  // ── Web Speech mic ────────────────────────────────────────────────────────
+  const toggleWebSpeechMic = () => {
+    if (!recogRef.current) { setSttError('Use Chrome/Edge for Web Speech. Or switch to Whisper.'); return; }
+    if (listening) { recogRef.current.stop(); setListening(false); }
+    else {
+      setSttError('');
+      try { recogRef.current.start(); setListening(true); }
+      catch { recogRef.current.abort(); setTimeout(() => { try { recogRef.current.start(); setListening(true); } catch {} }, 300); }
+    }
+  };
+
+  const toggleMic = whisperMode ? toggleWhisperMic : toggleWebSpeechMic;
+  const isSafety  = answer.startsWith('SAFETY ALERT');
 
   return (
     <div className="cat-card overflow-hidden">
@@ -143,16 +167,25 @@ export default function VoiceAgent({ operatorContext }) {
             <MessageSquare size={13} className="text-black"/>
           </div>
           <span className="text-white font-semibold text-sm">CAT Voice Assistant</span>
-          <span className="text-gray-600 text-xs hidden sm:block">RAG · BM25 · Qwen2.5:7b</span>
+          <span className="text-gray-600 text-xs hidden sm:block">
+            {whisperMode ? 'Whisper STT' : 'Web Speech'} · RAG · Qwen2.5:7b
+          </span>
         </div>
-        <button
-          onClick={() => { setTtsOn(v => !v); window.speechSynthesis?.cancel(); }}
-          className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all ${
-            ttsOn ? 'border-cat-yellow text-cat-yellow bg-cat-yellow/10' : 'border-cat-border text-gray-500'
-          }`}>
-          {ttsOn ? <Volume2 size={11}/> : <VolumeX size={11}/>}
-          {ttsOn ? ' TTS On' : ' TTS Off'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setWhisperMode(v => !v); setSttError(''); if (listening) { mediaRecRef.current?.stop(); recogRef.current?.stop(); } }}
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-all ${
+              whisperMode ? 'border-green-500 text-green-400 bg-green-500/10' : 'border-cat-border text-gray-400 hover:border-cat-yellow'
+            }`}>
+            <Radio size={10}/> {whisperMode ? 'Whisper' : 'WebSpeech'}
+          </button>
+          <button onClick={() => { setTtsOn(v => !v); window.speechSynthesis?.cancel(); }}
+            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all ${
+              ttsOn ? 'border-cat-yellow text-cat-yellow bg-cat-yellow/10' : 'border-cat-border text-gray-500'
+            }`}>
+            {ttsOn ? <Volume2 size={11}/> : <VolumeX size={11}/>}
+            {ttsOn ? ' TTS' : ' Mute'}
+          </button>
+        </div>
       </div>
 
       <div className="p-5 space-y-4">
@@ -164,11 +197,7 @@ export default function VoiceAgent({ operatorContext }) {
                   <Loader size={14} className="animate-spin text-cat-yellow"/> Searching knowledge base...
                 </div>
               : <>
-                  {isSafety && (
-                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2 inline-block">
-                      SAFETY ALERT
-                    </span>
-                  )}
+                  {isSafety && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2 inline-block">SAFETY ALERT</span>}
                   <p className={`text-sm leading-relaxed ${isSafety ? 'text-red-200' : 'text-white'}`}>
                     {answer.replace(/SAFETY ALERT[.:] ?/, '')}
                   </p>
@@ -186,44 +215,38 @@ export default function VoiceAgent({ operatorContext }) {
           </div>
         )}
 
-        {/* STT error */}
+        {/* Status */}
         {sttError && (
           <div className="flex items-center gap-2 bg-orange-900/20 border border-orange-700 rounded-xl px-3 py-2 text-xs text-orange-300">
             <AlertCircle size={12}/> {sttError}
           </div>
         )}
-
-        {/* Listening indicator */}
-        {listening && (
+        {listening && !transcribing && (
+          <div className="flex items-center gap-2 text-red-400 text-sm animate-pulse">
+            <Mic size={14}/> {whisperMode ? 'Recording… click mic again to stop & transcribe' : 'Listening… speak now'}
+          </div>
+        )}
+        {transcribing && (
           <div className="flex items-center gap-2 text-cat-yellow text-sm animate-pulse">
-            <Mic size={14}/> Listening... speak now
+            <Loader size={14} className="animate-spin"/> Transcribing with Whisper...
           </div>
         )}
 
         {/* Input row */}
         <div className="flex gap-2">
-          <input
-            value={question}
-            onChange={e => setQuestion(e.target.value)}
+          <input value={question} onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && ask(question)}
             placeholder="Ask about machinery, safety, maintenance..."
-            className="cat-input flex-1"
-          />
-          <button
-            onClick={toggleMic}
-            title={sttAvail ? (listening ? 'Stop listening' : 'Voice input') : 'Chrome/Edge only'}
+            className="cat-input flex-1"/>
+          <button onClick={toggleMic} disabled={transcribing}
             className={`px-3 py-2.5 rounded-xl border transition-all flex-shrink-0 ${
-              listening ? 'bg-red-600 border-red-500 animate-pulse' :
-              sttAvail  ? 'bg-cat-gray border-cat-border hover:border-cat-yellow' :
-                          'bg-cat-gray border-cat-border opacity-40 cursor-not-allowed'
+              listening    ? 'bg-red-600 border-red-500 animate-pulse' :
+              transcribing ? 'bg-cat-gray border-cat-border opacity-50 cursor-not-allowed' :
+                             'bg-cat-gray border-cat-border hover:border-cat-yellow'
             }`}>
-            {listening
-              ? <MicOff size={16} className="text-white"/>
-              : <Mic    size={16} className={sttAvail ? 'text-gray-400' : 'text-gray-600'}/>}
+            {listening ? <MicOff size={16} className="text-white"/> : <Mic size={16} className="text-gray-400"/>}
           </button>
-          <button
-            onClick={() => ask(question)}
-            disabled={loading || !question.trim()}
+          <button onClick={() => ask(question)} disabled={loading || !question.trim()}
             className="cat-btn px-4 py-2.5 text-sm flex-shrink-0">
             {loading ? <Loader size={14} className="animate-spin"/> : 'Ask'}
           </button>
@@ -248,8 +271,7 @@ export default function VoiceAgent({ operatorContext }) {
             <div className="text-gray-600 text-xs mb-2 uppercase tracking-wider">Recent</div>
             <div className="space-y-1.5 max-h-36 overflow-y-auto">
               {history.slice(1).map((h, i) => (
-                <div key={i}
-                  onClick={() => { setQuestion(h.question); setAnswer(h.answer); setSources(h.sources); }}
+                <div key={i} onClick={() => { setQuestion(h.question); setAnswer(h.answer); setSources(h.sources); }}
                   className="bg-cat-gray rounded-lg px-3 py-2 cursor-pointer hover:bg-cat-border transition-colors">
                   <div className="text-xs text-cat-yellow truncate">{h.question}</div>
                   <div className="text-xs text-gray-500 truncate mt-0.5">{h.answer?.slice(0, 70)}</div>

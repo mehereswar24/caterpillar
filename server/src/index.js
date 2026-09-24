@@ -97,6 +97,7 @@ app.use('/api/voice',         require('./routes/voice'));
 app.use('/api/vision',        require('./routes/vision'));
 app.use('/api/auth',           require('./routes/auth'));
 app.use('/api/fuel',           require('./routes/fuel'));
+app.use('/api/whisper',        require('./routes/whisper'));
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({
