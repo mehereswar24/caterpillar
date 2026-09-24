@@ -15,7 +15,7 @@ const crypto = require('crypto');
 
 const OLLAMA       = process.env.OLLAMA_BASE_URL    || 'http://localhost:11434';
 const VISION_MODEL = process.env.OLLAMA_VISION_MODEL || 'qwen2.5vl:7b';
-const AUTH_THRESHOLD = 0.45; // minimum similarity score to accept
+const AUTH_THRESHOLD = 0.15; // low threshold — VLM descriptions rarely share many tokens with stored descriptors
 
 // ── Similarity: token overlap between VLM description and stored descriptor ──
 function similarity(desc1, desc2) {

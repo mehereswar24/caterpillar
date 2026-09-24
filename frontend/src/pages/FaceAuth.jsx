@@ -181,10 +181,10 @@ export default function FaceAuth({ onAuthenticated }) {
           </div>
 
           {/* Action Area */}
-          <div className="p-8 bg-[#111] flex flex-col gap-4">
+          <div className="p-8 bg-[#111] flex flex-col gap-3">
             {!camReady ? (
-              <button onClick={startCamera} className="w-full bg-gray-800 text-white py-4 rounded-xl text-lg font-bold hover:bg-gray-700 hover:shadow-lg transition-all flex items-center justify-center gap-3">
-                <Camera size={24} /> Start Camera Initialize
+              <button onClick={startCamera} className="w-full bg-gray-800 text-white py-4 rounded-xl text-lg font-bold hover:bg-gray-700 transition-all flex items-center justify-center gap-3">
+                <Camera size={24} /> Start Camera
               </button>
             ) : (
               <button 
@@ -195,6 +195,11 @@ export default function FaceAuth({ onAuthenticated }) {
                 {scanning ? <><Loader size={24} className="animate-spin" /> Verifying...</> : <><ScanFace size={24} /> Scan Operator Face</>}
               </button>
             )}
+            {/* Demo login — always works */}
+            <button onClick={scan} disabled={scanning}
+              className="w-full border border-cat-yellow/30 text-cat-yellow/70 py-2.5 rounded-xl text-sm font-semibold hover:bg-cat-yellow/10 hover:text-cat-yellow transition-all flex items-center justify-center gap-2 disabled:opacity-40">
+              <ScanFace size={15}/> Demo Login (no camera)
+            </button>
           </div>
         </div>
         
