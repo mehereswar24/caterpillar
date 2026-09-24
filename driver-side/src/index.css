@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0a0a] text-gray-100 font-sans antialiased;
+    @apply bg-[#f5f5f2] text-neutral-900 font-sans antialiased;
   }
 }
 
@@ -14,14 +14,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f0f0f;
+  background: #f5f5f2;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: #cfcfc8;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #FFB81C;
+  background: #FFCD11;
 }
 
 @keyframes pulse-ring {

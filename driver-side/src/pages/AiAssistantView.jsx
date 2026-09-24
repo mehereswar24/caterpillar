@@ -12,7 +12,7 @@ const RECOMMENDED_QUESTIONS = [
   'What is the emergency procedure for underground gas line contact?',
 ];
 
-export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
+export default function AiAssistantView({ machineId = 'CAT 320 • EXC001', onAsk }) {
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
@@ -34,7 +34,9 @@ export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
 
     logEvent(LOG_CATEGORIES.VOICE, `AI Terminal query: "${q}"`, LOG_SEVERITY.INFO);
 
-    const answer = await askVoiceAssistant(q, { machine_id: machineId });
+    let answer;
+    try { answer = onAsk ? await onAsk(q) : await askVoiceAssistant(q, { machine_id: machineId }); }
+    catch { answer = "Sorry, I couldn't get an answer for that. Please ask again."; }
     const aiMsg = { sender: 'ai', text: answer, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     setMessages(prev => [...prev, aiMsg]);
     setLoading(false);
@@ -51,22 +53,22 @@ export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Title */}
-      <div className="pb-3 border-b border-[#222]">
+      <div className="pb-3 border-b border-[#e6e6e1]">
         <div className="flex items-center gap-2 mb-1">
-          <Bot size={20} className="text-[#FFB81C]" />
-          <h1 className="text-xl font-black text-white uppercase tracking-tight">
+          <Bot size={20} className="text-neutral-900" />
+          <h1 className="text-xl font-black text-neutral-900 uppercase tracking-tight">
             CAT AI Cab Assistant (RAG Knowledge Engine)
           </h1>
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-neutral-600">
           Powered by embedded CAT 320 Field Service Manuals and safety procedures.
         </p>
       </div>
 
       {/* Suggested Questions Pill Strip */}
-      <div className="bg-[#121212] border border-[#262626] p-3 rounded-2xl">
-        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-2 flex items-center gap-1">
-          <Sparkles size={12} className="text-[#FFB81C]" /> Recommended Manual Queries:
+      <div className="bg-[#ffffff] border border-[#e6e6e1] p-3 rounded-2xl">
+        <span className="text-[10px] text-neutral-600 uppercase font-bold tracking-wider block mb-2 flex items-center gap-1">
+          <Sparkles size={12} className="text-neutral-900" /> Recommended Manual Queries:
         </span>
         <div className="flex flex-wrap gap-1.5">
           {RECOMMENDED_QUESTIONS.map((q, idx) => (
@@ -74,7 +76,7 @@ export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
               key={idx}
               type="button"
               onClick={() => handleSend(q)}
-              className="text-xs bg-[#1a1a1a] hover:bg-[#252525] text-gray-300 hover:text-[#FFB81C] px-3 py-1 rounded-xl border border-[#333] transition"
+              className="text-xs bg-[#f0f0ec] hover:bg-[#f0f0ec] text-neutral-700 hover:text-neutral-900 px-3 py-1 rounded-xl border border-[#e6e6e1] transition"
             >
               {q}
             </button>
@@ -83,38 +85,38 @@ export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
       </div>
 
       {/* Conversation Thread */}
-      <div className="bg-[#111111] border border-[#262626] rounded-2xl p-4 min-h-[380px] max-h-[500px] overflow-y-auto space-y-4 shadow-xl">
+      <div className="bg-[#ffffff] border border-[#e6e6e1] rounded-2xl p-4 min-h-[380px] max-h-[500px] overflow-y-auto space-y-4 shadow-xl">
         {messages.map((m, idx) => (
           <div
             key={idx}
             className={`flex items-start gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {m.sender === 'ai' && (
-              <div className="w-8 h-8 rounded-xl bg-[#FFB81C]/20 border border-[#FFB81C]/40 text-[#FFB81C] flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#FFCD11]/20 border border-[#FFCD11]/40 text-neutral-900 flex items-center justify-center flex-shrink-0">
                 <Bot size={16} />
               </div>
             )}
             <div
               className={`max-w-xl p-3.5 rounded-2xl text-xs leading-relaxed ${
                 m.sender === 'user'
-                  ? 'bg-[#FFB81C] text-black font-semibold'
-                  : 'bg-[#181818] border border-[#2d2d2d] text-gray-200'
+                  ? 'bg-neutral-900 text-white font-semibold'
+                  : 'bg-[#f0f0ec] border border-[#e6e6e1] text-neutral-800'
               }`}
             >
               <p>{m.text}</p>
-              <span className={`text-[9px] block text-right mt-1 font-mono ${m.sender === 'user' ? 'text-black/60' : 'text-gray-500'}`}>
+              <span className={`text-[9px] block text-right mt-1 font-mono ${m.sender === 'user' ? 'text-white/60' : 'text-neutral-500'}`}>
                 {m.time}
               </span>
             </div>
             {m.sender === 'user' && (
-              <div className="w-8 h-8 rounded-xl bg-gray-800 text-white flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gray-800 text-neutral-900 flex items-center justify-center flex-shrink-0">
                 <User size={16} />
               </div>
             )}
           </div>
         ))}
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-[#FFB81C] font-mono animate-pulse">
+          <div className="flex items-center gap-2 text-xs text-neutral-900 font-mono animate-pulse">
             <Bot size={14} /> CAT AI is analyzing technical documentation...
           </div>
         )}
@@ -133,12 +135,12 @@ export default function AiAssistantView({ machineId = 'CAT 320 • EXC001' }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Ask CAT AI about machine specs, error codes, fluid capacities, safety zones..."
-          className="flex-1 bg-[#141414] border border-[#2b2b2b] text-xs text-white px-4 py-3 rounded-xl outline-none focus:border-[#FFB81C]"
+          className="flex-1 bg-[#ffffff] border border-[#e6e6e1] text-xs text-neutral-900 px-4 py-3 rounded-xl outline-none focus:border-[#FFCD11]"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="bg-[#FFB81C] hover:bg-[#e0a218] text-black font-black text-xs px-5 py-3 rounded-xl transition disabled:opacity-40 flex items-center gap-1.5 shadow-lg shadow-[#FFB81C]/20"
+          className="bg-neutral-900 hover:bg-[#e0a218] text-white font-black text-xs px-5 py-3 rounded-xl transition disabled:opacity-40 flex items-center gap-1.5 shadow-lg "
         >
           <Send size={14} /> Send
         </button>

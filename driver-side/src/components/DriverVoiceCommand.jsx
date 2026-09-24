@@ -100,13 +100,13 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
   };
 
   return (
-    <div className="bg-[#111111] border-t border-[#262626] p-4 shadow-2xl">
+    <div className="bg-[#ffffff] border-t border-[#e6e6e1] p-4 shadow-2xl">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-4">
         {/* Large Push-to-Talk Voice Button (PRIMARY REQUIREMENT) */}
         <div className="flex items-center gap-3">
           <div className="relative">
             {listening && (
-              <div className="absolute -inset-2 rounded-2xl bg-[#FFB81C] animate-ping opacity-40" />
+              <div className="absolute -inset-2 rounded-2xl bg-[#FFCD11] animate-ping opacity-40" />
             )}
             <button
               type="button"
@@ -114,7 +114,7 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
               className={`relative z-10 px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2.5 transition-all shadow-xl ${
                 listening
                   ? 'bg-red-600 text-white shadow-red-600/40 animate-pulse'
-                  : 'bg-[#FFB81C] hover:bg-[#e0a218] text-black shadow-[#FFB81C]/25'
+                  : 'bg-neutral-900 hover:bg-[#e0a218] text-white '
               }`}
             >
               {listening ? <MicOff size={18} /> : <Mic size={18} />}
@@ -127,8 +127,8 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
             onClick={() => setTtsEnabled(!ttsEnabled)}
             className={`p-2.5 rounded-xl border text-xs flex items-center gap-1.5 transition ${
               ttsEnabled
-                ? 'bg-[#181818] border-emerald-500/40 text-emerald-400'
-                : 'bg-[#181818] border-[#333] text-gray-500'
+                ? 'bg-[#f0f0ec] border-emerald-500/40 text-emerald-600'
+                : 'bg-[#f0f0ec] border-[#e6e6e1] text-neutral-500'
             }`}
             title={ttsEnabled ? 'Cab Audio Feedback Active' : 'Cab Audio Feedback Muted'}
           >
@@ -152,10 +152,10 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 placeholder={listening ? 'Listening to cab microphone...' : 'Ask question (e.g. "What is safe tilt angle?", "Fuel capacity?")...'}
-                className="w-full bg-[#181818] border border-[#2e2e2e] focus:border-[#FFB81C] text-gray-200 placeholder-gray-500 text-xs rounded-xl px-3.5 py-2.5 outline-none transition"
+                className="w-full bg-[#f0f0ec] border border-[#e6e6e1] focus:border-[#FFCD11] text-neutral-800 placeholder-neutral-500 text-xs rounded-xl px-3.5 py-2.5 outline-none transition"
               />
               {transcript && (
-                <span className="absolute right-3 top-2.5 text-[10px] text-[#FFB81C] font-mono">
+                <span className="absolute right-3 top-2.5 text-[10px] text-neutral-900 font-mono">
                   LIVE MIC
                 </span>
               )}
@@ -164,7 +164,7 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
             <button
               type="submit"
               disabled={loading || (!inputText && !transcript)}
-              className="bg-[#242424] hover:bg-[#2f2f2f] text-[#FFB81C] p-2.5 rounded-xl border border-[#333] transition disabled:opacity-40"
+              className="bg-[#f0f0ec] hover:bg-[#e0e0da] text-neutral-900 p-2.5 rounded-xl border border-[#e6e6e1] transition disabled:opacity-40"
             >
               <Send size={15} />
             </button>
@@ -172,7 +172,7 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
 
           {/* Quick Query Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] text-gray-500 uppercase font-semibold">Quick Ask:</span>
+            <span className="text-[10px] text-neutral-500 uppercase font-semibold">Quick Ask:</span>
             {QUICK_QUERIES.map((q, idx) => (
               <button
                 key={idx}
@@ -181,7 +181,7 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
                   setInputText(q);
                   handleAsk(q);
                 }}
-                className="text-[10px] bg-[#1a1a1a] hover:bg-[#252525] text-gray-300 hover:text-white px-2 py-0.5 rounded-md border border-[#2b2b2b] transition truncate max-w-[210px]"
+                className="text-[10px] bg-[#f0f0ec] hover:bg-[#f0f0ec] text-neutral-700 hover:text-neutral-900 px-2 py-0.5 rounded-md border border-[#e6e6e1] transition truncate max-w-[210px]"
               >
                 {q}
               </button>
@@ -192,16 +192,16 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
 
       {/* Answer Modal / Toast Display */}
       {response && (
-        <div className="max-w-6xl mx-auto mt-3 bg-[#181818] border border-[#FFB81C]/40 rounded-xl p-3 shadow-xl animate-fade-in flex items-start justify-between gap-3">
+        <div className="max-w-6xl mx-auto mt-3 bg-[#f0f0ec] border border-[#FFCD11]/40 rounded-xl p-3 shadow-xl animate-fade-in flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#FFB81C]/20 border border-[#FFB81C]/40 text-[#FFB81C] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-7 h-7 rounded-lg bg-[#FFCD11]/20 border border-[#FFCD11]/40 text-neutral-900 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Bot size={15} />
             </div>
             <div>
-              <div className="text-[11px] font-bold text-[#FFB81C] mb-0.5">
+              <div className="text-[11px] font-bold text-neutral-900 mb-0.5">
                 Q: "{response.question}"
               </div>
-              <div className="text-xs text-gray-200 leading-relaxed font-sans">
+              <div className="text-xs text-neutral-800 leading-relaxed font-sans">
                 {response.answer}
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function DriverVoiceCommand({ machineId = 'EXC001', currentTask }
           <button
             type="button"
             onClick={() => setResponse(null)}
-            className="text-gray-500 hover:text-white text-xs px-2 py-1 rounded"
+            className="text-neutral-500 hover:text-neutral-900 text-xs px-2 py-1 rounded"
           >
             ✕
           </button>

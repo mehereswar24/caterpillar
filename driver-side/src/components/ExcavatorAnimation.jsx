@@ -1,10 +1,20 @@
+import { HazardCard } from './CriticalPerimeterAlert';
 import React, { useState, useEffect, useRef } from 'react';
 import { Gauge, Flame, AlertCircle, ShieldAlert, Sparkles, Navigation, Layers } from 'lucide-react';
+
+const MODES = [
+  { id: 'digging', label: 'Digging' },
+  { id: 'travelling', label: 'In Transit' },
+  { id: 'idling', label: 'Idling' },
+  { id: 'slope_alert', label: 'Slope' },
+];
 
 export default function ExcavatorAnimation({
   mode = 'digging', // 'digging' | 'travelling' | 'idling' | 'slope_alert'
   onModeChange,
   telemetry,
+  showControls = false,
+  alerts = [],
 }) {
   const [armAngle, setArmAngle] = useState(0);
   const [bucketAngle, setBucketAngle] = useState(0);
@@ -65,58 +75,51 @@ export default function ExcavatorAnimation({
   const isHighSlope = tiltAngle > 15;
 
   return (
-    <div className="bg-[#121212] border border-[#242424] rounded-2xl overflow-hidden shadow-xl flex flex-col">
-      {/* Simulator HUD Header */}
-      <div className="px-5 py-3 bg-[#171717] border-b border-[#242424] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FFB81C] animate-ping" />
-            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-wider">
-              Excavator Live Status Animation
-            </h2>
-          </div>
-          <span className="text-[10px] bg-black/60 text-[#FFB81C] border border-[#FFB81C]/40 px-2 py-0.5 rounded font-mono font-semibold">
-            CAT 320 HYDRAULIC
-          </span>
+    <div className="bg-[#ffffff] border border-[#e6e6e1] rounded-2xl overflow-hidden flex flex-col h-full min-h-0">
+      <div className="px-4 py-2.5 border-b border-[#e6e6e1] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#FFCD11] animate-pulse" />
+          <h2 className="text-xs font-medium text-neutral-600 tracking-wide">Live Status</h2>
         </div>
 
-        {/* Operating Mode Buttons */}
-        <div className="flex items-center gap-1.5 bg-[#0a0a0a] p-1 rounded-xl border border-[#2c2c2c]">
-          {[
-            { id: 'digging', label: 'Digging' },
-            { id: 'travelling', label: 'In Transit' },
-            { id: 'idling', label: 'Idling' },
-            { id: 'slope_alert', label: 'Slope Warning' },
-          ].map(m => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onModeChange?.(m.id)}
-              className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
-                mode === m.id
-                  ? 'bg-[#FFB81C] text-black shadow-md shadow-[#FFB81C]/30'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+        {showControls ? (
+          <div className="flex items-center gap-1 bg-[#f5f5f2] p-0.5 rounded-lg border border-[#e6e6e1]">
+            {MODES.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => onModeChange?.(m.id)}
+                className={`text-[11px] font-semibold px-2 py-1 rounded-md transition ${
+                  mode === m.id ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 text-[11px] font-semibold">
+            <span className="text-neutral-900">{MODES.find(m => m.id === mode)?.label || mode}</span>
+            <span className="flex items-center gap-1.5 text-emerald-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Seatbelt on
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Main SVG Visualizer */}
-      <div className="relative bg-[#090909] p-4 flex items-center justify-center min-h-[300px] overflow-hidden select-none">
+      <div className="relative bg-[#f5f5f2] p-2 flex-1 min-h-0 flex items-center justify-center overflow-hidden select-none">
         {/* Sky / Grid Background */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#FFB81C_1px,transparent_1px)] [background-size:24px_24px]" />
+        <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#FFCD11_1px,transparent_1px)] [background-size:24px_24px]" />
 
         {/* Slope Warning Glow */}
         {isHighSlope && (
-          <div className="absolute inset-0 bg-red-950/20 pointer-events-none border-2 border-red-500/30 animate-pulse" />
+          <div className="absolute inset-0 bg-red-50 pointer-events-none border-2 border-red-500/30 animate-pulse" />
         )}
 
         <svg
           viewBox="0 0 460 270"
-          className="w-full h-auto max-h-[340px]"
+          className="w-full h-full"
           style={{
             filter: isHighSlope ? 'drop-shadow(0 0 16px rgba(239,68,68,0.4))' : 'none',
           }}
@@ -124,7 +127,7 @@ export default function ExcavatorAnimation({
           <defs>
             {/* Caterpillar Yellow Gradient */}
             <linearGradient id="catYellowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFB81C" />
+              <stop offset="0%" stopColor="#FFCD11" />
               <stop offset="100%" stopColor="#D99000" />
             </linearGradient>
 
@@ -165,7 +168,7 @@ export default function ExcavatorAnimation({
           {/* Excavator Group with Dynamic Slope Tilt Transformation */}
           <g transform={`translate(210, 215) rotate(${tiltRad}) translate(-210, -215)`}>
             {/* Caterpillar Heavy Tracks Chassis */}
-            <rect x="70" y="190" width="240" height="30" rx="15" fill="#1f1d1b" stroke="#FFB81C" strokeWidth="2.5" />
+            <rect x="70" y="190" width="240" height="30" rx="15" fill="#1f1d1b" stroke="#FFCD11" strokeWidth="2.5" />
 
             {/* Moving Track Pad Links */}
             {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -176,7 +179,7 @@ export default function ExcavatorAnimation({
                 width={18}
                 height={26}
                 rx={4}
-                fill="#FFB81C"
+                fill="#FFCD11"
                 opacity={0.85}
               >
                 {mode === 'travelling' && (
@@ -200,7 +203,7 @@ export default function ExcavatorAnimation({
                 cy={205}
                 r={idx === 0 || idx === 4 ? 14 : 11}
                 fill="#111111"
-                stroke="#FFB81C"
+                stroke="#FFCD11"
                 strokeWidth="2"
               >
                 {mode === 'travelling' && (
@@ -222,8 +225,8 @@ export default function ExcavatorAnimation({
 
             {/* CAT Triangle & Stencil */}
             <g transform="translate(182, 155)">
-              <polygon points="0,32 16,0 32,32" fill="#FFB81C" />
-              <text x="36" y="24" fontSize="18" fontWeight="900" fill="#FFB81C" fontFamily="Arial Black, Impact, sans-serif">
+              <polygon points="0,32 16,0 32,32" fill="#FFCD11" />
+              <text x="36" y="24" fontSize="18" fontWeight="900" fill="#FFCD11" fontFamily="Arial Black, Impact, sans-serif">
                 CAT
               </text>
             </g>
@@ -236,7 +239,7 @@ export default function ExcavatorAnimation({
             <rect x="278" y="108" width="34" height="32" rx="3" fill="url(#cabGlass)" opacity="0.7" />
 
             {/* Driver Silhouette inside Cab */}
-            <circle cx="253" cy="120" r="7" fill="#FFB81C" />
+            <circle cx="253" cy="120" r="7" fill="#FFCD11" />
             <rect x="246" y="127" width="14" height="12" rx="3" fill="#eab308" />
 
             {/* Green Seatbelt Indicator Light */}
@@ -330,35 +333,8 @@ export default function ExcavatorAnimation({
           </g>
         </svg>
 
-        {/* Live Gauges Overlay at the Bottom of Animation */}
-        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between pointer-events-none">
-          <div className="flex gap-2">
-            <div className="bg-[#141414]/90 backdrop-blur border border-[#2e2e2e] px-3 py-1.5 rounded-xl flex items-center gap-2">
-              <Gauge size={13} className="text-[#FFB81C]" />
-              <span className="text-[10px] text-gray-400">ENGINE:</span>
-              <span className="text-xs font-mono font-bold text-white">{rpm} RPM</span>
-            </div>
-
-            <div className="bg-[#141414]/90 backdrop-blur border border-[#2e2e2e] px-3 py-1.5 rounded-xl flex items-center gap-2">
-              <span className="text-[10px] text-gray-400">HYD:</span>
-              <span className="text-xs font-mono font-bold text-sky-400">{hydraulic} bar</span>
-            </div>
-
-            <div className="bg-[#141414]/90 backdrop-blur border border-[#2e2e2e] px-3 py-1.5 rounded-xl flex items-center gap-2">
-              <span className="text-[10px] text-gray-400">TILT:</span>
-              <span className={`text-xs font-mono font-bold ${isHighSlope ? 'text-red-400' : 'text-emerald-400'}`}>
-                {tiltAngle.toFixed(1)}°
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-[#141414]/90 backdrop-blur border border-[#2e2e2e] px-3 py-1.5 rounded-xl flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-[10px] text-gray-300 font-mono font-semibold">
-              SEATBELT SECURED
-            </span>
-          </div>
-        </div>
+        {/* Active hazard, shown right on the machine view */}
+        {alerts.length > 0 && <HazardCard alerts={alerts} className="absolute top-3 left-3 right-3" />}
       </div>
     </div>
   );

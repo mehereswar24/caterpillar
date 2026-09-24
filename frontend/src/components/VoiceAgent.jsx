@@ -24,16 +24,38 @@ const SOURCE_LABELS = {
   '08_attachments':     'Attachments',
 };
 
-function speak(text) {
-  if (!window.speechSynthesis) return;
+function speak(text, onDone) {
+  let done = false;
+  const finish = () => { if (!done) { done = true; onDone?.(); } };
+  if (!window.speechSynthesis) return finish();
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text.replace(/SAFETY ALERT[.:] ?/g, ''));
+  const clean = text.replace(/SAFETY ALERT[.:] ?/g, '');
+  const utt = new SpeechSynthesisUtterance(clean);
   utt.lang = 'en-US'; utt.rate = 0.92; utt.pitch = 1; utt.volume = 1;
   const voices = window.speechSynthesis.getVoices();
   const eng = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'))
            || voices.find(v => v.lang.startsWith('en')) || null;
   if (eng) utt.voice = eng;
+  utt.onend = finish; utt.onerror = finish;
+  // Chrome sometimes never fires onend — don't leave the wake listener paused forever
+  setTimeout(finish, 3000 + clean.length * 90);
   setTimeout(() => window.speechSynthesis.speak(utt), 120);
+}
+
+// "Hey Cat" wake phrase (recognizers often hear cat as kat/cad/cap)
+const WAKE_RE = /\b(?:hey|hay|hi|okay|ok)[\s,.]+(?:cat|kat|cad|cap|caterpillar)\b[\s,.!?]*/gi;
+const SILENCE_MS = 1800;     // end of command
+const NO_COMMAND_MS = 6000;  // woke but nothing said
+
+function beep() {
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = 880; g.gain.value = 0.08;
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + 0.12);
+    o.onended = () => c.close();
+  } catch {}
 }
 
 async function transcribeWithWhisper(blob) {
@@ -56,11 +78,20 @@ export default function VoiceAgent({ operatorContext }) {
   const [history,      setHistory]      = useState([]);
   const [sttError,     setSttError]     = useState('');
   const [whisperMode,  setWhisperMode]  = useState(true);
+  const [handsFree,    setHandsFree]    = useState(true);   // "Hey Cat" wake word
+  const [agent,        setAgent]        = useState('off');  // off | idle | awake | thinking | speaking
+  const [liveText,     setLiveText]     = useState('');
 
   const mediaRecRef = useRef(null);
   const chunksRef   = useRef([]);
   const recogRef    = useRef(null);
   const ttsRef      = useRef(true);
+  const wakeRef     = useRef(null);
+  const awakeRef    = useRef(false);
+  const silenceRef  = useRef(null);
+  const handsFreeRef = useRef(true);
+  const askRef      = useRef(null);
+  const resumeRef   = useRef(() => {});
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
 
   // Pre-load TTS voices
@@ -86,12 +117,82 @@ export default function VoiceAgent({ operatorContext }) {
       setAnswer(ans);
       setSources(d.sources || []);
       setHistory(h => [{ question: text, answer: ans, sources: d.sources || [] }, ...h.slice(0, 7)]);
-      if (ttsRef.current) speak(ans);
+      setLoading(false);
+      if (ttsRef.current) { setAgent('speaking'); speak(ans, () => resumeRef.current()); }
+      else resumeRef.current();
+      return;
     } catch {
       setAnswer('Cannot reach server. Is the backend running on port 5000?');
     }
     setLoading(false);
+    resumeRef.current();
   }, [operatorContext]);
+  askRef.current = ask;
+
+  // ── "Hey Cat" wake word (hands-free) ──────────────────────────────────────
+  const stopWake = useCallback(() => {
+    clearTimeout(silenceRef.current);
+    awakeRef.current = false;
+    const r = wakeRef.current;
+    wakeRef.current = null;          // identity check in onend stops the auto-restart
+    try { r?.abort(); } catch {}
+  }, []);
+
+  const startWake = useCallback(() => {
+    if (!handsFreeRef.current) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setSttError('Wake word needs Chrome/Edge (Web Speech). Use the mic button instead.');
+      setHandsFree(false); return;
+    }
+    stopWake();
+    const r = new SR();
+    r.continuous = true; r.interimResults = true; r.lang = 'en-US';
+    wakeRef.current = r;
+    setAgent('idle'); setLiveText('');
+
+    const finish = (cmd) => {
+      stopWake();
+      if (!cmd) { startWake(); return; }     // woke but heard nothing
+      setLiveText(''); setQuestion(cmd); setAgent('thinking');
+      askRef.current(cmd);
+    };
+
+    r.onresult = (e) => {
+      const text = Array.from(e.results).map(x => x[0].transcript).join(' ');
+      let last = null, m;
+      const re = new RegExp(WAKE_RE.source, 'gi');
+      while ((m = re.exec(text))) last = m;
+      if (!last) return;
+      if (!awakeRef.current) { awakeRef.current = true; setAgent('awake'); setSttError(''); beep(); }
+      const cmd = text.slice(last.index + last[0].length).trim();
+      setLiveText(cmd);
+      clearTimeout(silenceRef.current);
+      silenceRef.current = setTimeout(() => finish(cmd), cmd ? SILENCE_MS : NO_COMMAND_MS);
+    };
+    r.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;   // normal, onend restarts
+      const m = {
+        'not-allowed': 'Mic permission denied — allow the microphone for Hey Cat.',
+        'service-not-allowed': 'Mic permission denied — allow the microphone for Hey Cat.',
+        'network': 'Speech service unreachable — Hey Cat needs internet. Use the mic button (Whisper).',
+      };
+      setSttError(m[e.error] || 'Hey Cat: ' + e.error);
+      if (m[e.error]) { stopWake(); setHandsFree(false); }
+    };
+    r.onend = () => {
+      if (wakeRef.current === r && handsFreeRef.current) setTimeout(() => { if (wakeRef.current === r) startWake(); }, 300);
+    };
+    try { r.start(); } catch {}
+  }, [stopWake]);
+
+  resumeRef.current = () => { if (handsFreeRef.current) startWake(); };
+
+  useEffect(() => {
+    handsFreeRef.current = handsFree;
+    if (handsFree) startWake(); else { stopWake(); setAgent('off'); setLiveText(''); }
+    return () => stopWake();
+  }, [handsFree, startWake, stopWake]);
 
   // ── Web Speech setup ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -104,6 +205,7 @@ export default function VoiceAgent({ operatorContext }) {
       setListening(false);
       const m = { 'not-allowed': 'Mic denied.', 'no-speech': 'No speech.', 'network': 'Network error — switch to Whisper mode.' };
       setSttError(m[e.error] || 'STT: ' + e.error);
+      resumeRef.current();
     };
     r.onend = () => setListening(false);
     recogRef.current = r;
@@ -133,6 +235,7 @@ export default function VoiceAgent({ operatorContext }) {
           ask(text);
         } catch (e) {
           setSttError('Whisper: ' + e.message);
+          resumeRef.current();
         }
         setTranscribing(false);
       };
@@ -155,7 +258,10 @@ export default function VoiceAgent({ operatorContext }) {
     }
   };
 
-  const toggleMic = whisperMode ? toggleWhisperMic : toggleWebSpeechMic;
+  const toggleMic = () => {
+    if (handsFreeRef.current && !listening) { stopWake(); setAgent('off'); }   // one mic user at a time
+    return whisperMode ? toggleWhisperMic() : toggleWebSpeechMic();
+  };
   const isSafety  = answer.startsWith('SAFETY ALERT');
 
   return (
@@ -172,6 +278,13 @@ export default function VoiceAgent({ operatorContext }) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => { setHandsFree(v => !v); setSttError(''); }}
+            title='Always listening for "Hey Cat"'
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-all ${
+              handsFree ? 'border-cat-yellow text-cat-yellow bg-cat-yellow/10' : 'border-cat-border text-gray-400 hover:border-cat-yellow'
+            }`}>
+            <Mic size={10}/> Hey Cat {handsFree ? 'ON' : 'OFF'}
+          </button>
           <button onClick={() => { setWhisperMode(v => !v); setSttError(''); if (listening) { mediaRecRef.current?.stop(); recogRef.current?.stop(); } }}
             className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-all ${
               whisperMode ? 'border-green-500 text-green-400 bg-green-500/10' : 'border-cat-border text-gray-400 hover:border-cat-yellow'
@@ -219,6 +332,19 @@ export default function VoiceAgent({ operatorContext }) {
         {sttError && (
           <div className="flex items-center gap-2 bg-orange-900/20 border border-orange-700 rounded-xl px-3 py-2 text-xs text-orange-300">
             <AlertCircle size={12}/> {sttError}
+          </div>
+        )}
+        {handsFree && agent === 'idle' && !listening && (
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> Say <b className="text-cat-yellow">"Hey Cat"</b> to wake me…
+          </div>
+        )}
+        {handsFree && agent === 'awake' && (
+          <div className="rounded-xl border border-cat-yellow bg-cat-yellow/10 px-4 py-3">
+            <div className="flex items-center gap-2 text-cat-yellow text-xs uppercase tracking-wider mb-1 animate-pulse">
+              <Mic size={12}/> Listening
+            </div>
+            <div className="text-white text-base min-h-[1.5rem]">{liveText || <span className="text-gray-500">Go ahead…</span>}</div>
           </div>
         )}
         {listening && !transcribing && (

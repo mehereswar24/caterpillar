@@ -3,9 +3,10 @@ export const LOG_CATEGORIES = { TASK:'TASK', SAFETY:'SAFETY', FUEL:'FUEL', SYSTE
 export const LOG_SEVERITY   = { INFO:'INFO', WARNING:'WARNING', CRITICAL:'CRITICAL' };
 
 const _log = [];
+let _seq = 0;
 
 export function logEvent(category, message, severity = LOG_SEVERITY.INFO) {
-  _log.unshift({ ts: new Date().toISOString(), category, message, severity, id: Date.now() });
+  _log.unshift({ seq: ++_seq, ts: new Date().toISOString(), category, message, severity, id: Date.now() });
   if (_log.length > 200) _log.pop();
 }
 

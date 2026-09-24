@@ -98,6 +98,9 @@ app.use('/api/vision',        require('./routes/vision'));
 app.use('/api/auth',           require('./routes/auth'));
 app.use('/api/fuel',           require('./routes/fuel'));
 app.use('/api/whisper',        require('./routes/whisper'));
+const { supervisorRouter, liveRouter } = require('./routes/supervisor');
+app.use('/api/supervisor',     supervisorRouter);
+app.use('/api/live',           liveRouter);
 
 // ── Health ────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({

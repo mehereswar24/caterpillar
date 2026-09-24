@@ -1,66 +1,58 @@
 /**
- * auth.js — Face authentication via Qwen2.5-VL:7b
+ * auth.js — Face authentication (local ArcFace embeddings, see faceStore.js)
  *
  * Flow:
  *   1. Cab camera captures image → base64 sent to POST /api/auth/face
- *   2. Qwen-VL describes the person in the image
- *   3. Description compared against registered operator face_descriptors
- *   4. Best match above threshold → session created, machine unlocked
+ *   2. face service turns the photo into a 512-d identity vector
+ *   3. vector compared (cosine) against the vectors enrolled for each operator
+ *   4. Best match above threshold and clear of the runner-up → session created, machine unlocked
  *   5. No match → UNAUTHORIZED logged, machine stays locked
  *   6. Supervisor can override via POST /api/auth/override
  */
 const router = require('express').Router();
-const axios  = require('axios');
 const crypto = require('crypto');
-
-const OLLAMA       = process.env.OLLAMA_BASE_URL    || 'http://localhost:11434';
-const VISION_MODEL = process.env.OLLAMA_VISION_MODEL || 'qwen2.5vl:7b';
-const AUTH_THRESHOLD = 0.15; // low threshold — VLM descriptions rarely share many tokens with stored descriptors
-
-// ── Similarity: token overlap between VLM description and stored descriptor ──
-function similarity(desc1, desc2) {
-  const tok = s => new Set(s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2));
-  const a = tok(desc1), b = tok(desc2);
-  const inter = [...a].filter(x => b.has(x)).length;
-  const union = new Set([...a, ...b]).size;
-  return union === 0 ? 0 : inter / union;
-}
+const faces  = require('../faceStore');
 
 // ── POST /api/auth/face ────────────────────────────────────────────────────
 router.post('/face', async (req, res) => {
-  const { image, machine_id = 'EXC001' } = req.body;
-  if (!image) return res.status(400).json({ error: 'image (base64) required' });
+  const { image, machine_id = 'EXC001', operator_id: claimedId } = req.body;
+  if (!image || image === 'demo' || image.length < 200) return res.status(400).json({ approved: false, result: 'ERROR_NO_IMAGE', error: 'A real camera image (base64) is required' });
 
   const db = req.app.get('db');
 
-  // Step 1: Ask VLM to describe the person
-  let visionDesc = '';
-  let visionRaw  = '';
+  // Step 1: read the face (fails CLOSED — no face service, no entry)
+  let probe;
   try {
-    const resp = await axios.post(`${OLLAMA}/api/generate`, {
-      model:  VISION_MODEL,
-      prompt: 'Describe the person in this image in detail: gender, approximate age, hair colour and style, skin complexion, and any visible safety equipment such as hard hat colour, vest colour, or glasses. Be specific and factual.',
-      images: [image],
-      stream: false,
-      options: { temperature: 0.1, num_predict: 150 },
-    }, { timeout: 30000 });
-    visionDesc = resp.data.response?.trim() || '';
-    visionRaw  = visionDesc;
+    probe = await faces.embed(image);
   } catch (e) {
-    // Ollama not available — use demo mode
-    visionDesc = 'Male, short black hair, dark complexion, approximately 35 years old, wearing orange hard hat and high-vis vest';
-    visionRaw  = `[DEMO MODE - Ollama unavailable: ${e.message}]`;
+    return res.status(503).json({
+      approved: false, result: 'ERROR_FACE_SERVICE_UNAVAILABLE', operator: null, machine_id,
+      error: e.message,
+      message: 'Face recognition is unavailable, so the machine stays locked. Ask a supervisor for an override.',
+    });
+  }
+  const logAttempt = (result, reason, opId = 'UNKNOWN', conf = 0) =>
+    db.prepare('INSERT INTO auth_log (machine_id, operator_id, result, confidence, reason) VALUES (?, ?, ?, ?, ?)').run(machine_id, opId, result, conf, reason);
+
+  if (!probe.ok || !probe.embedding) {
+    const message = faces.reasonText(probe.reason);
+    logAttempt('REJECTED_BAD_SCAN', `Unusable scan: ${probe.reason || 'unknown'}`);
+    return res.json({ approved: false, result: 'REJECTED_BAD_SCAN', operator: null, machine_id, message, scan_problem: probe.reason });
   }
 
-  // Step 2: Match against all registered operators
+  // Step 2: compare against every enrolled operator
+  const ranked = faces.identify(db, probe.embedding);
+  if (!ranked.length) {
+    return res.json({ approved: false, result: 'REJECTED_NOT_ENROLLED', operator: null, machine_id,
+      message: 'No operator faces are enrolled yet. Ask a supervisor to enroll faces first.' });
+  }
   const operators = db.prepare('SELECT * FROM operators WHERE active = 1').all();
-  const scores = operators.map(op => ({
-    ...op,
-    score: similarity(visionDesc, op.face_descriptor || ''),
-  })).sort((a, b) => b.score - a.score);
-
+  const byId = new Map(ranked.map(r => [r.operator_id, r.score]));
+  const scores = operators.map(op => ({ ...op, score: Math.max(0, byId.get(op.operator_id) ?? 0) }))
+    .sort((a, b) => b.score - a.score);
   const best = scores[0];
-  const matched = best && best.score >= AUTH_THRESHOLD;
+  const matched = faces.isMatch(ranked);
+  const visionRaw = `face match ${(ranked[0].score * 100).toFixed(0)}% (${probe.face_px?.toFixed(0)}px face)`;
 
   // Step 3: Check machine assignment
   let assignmentValid = false;
@@ -74,7 +66,10 @@ router.post('/face', async (req, res) => {
   }
 
   // Step 4: Log auth attempt
+  // The driver picked a profile before scanning: the face has to be THAT person's.
+  const wrongProfile = matched && claimedId && best.operator_id !== claimedId;
   const result = !matched ? 'REJECTED_NO_MATCH'
+               : wrongProfile ? 'REJECTED_PROFILE_MISMATCH'
                : !assignmentValid ? 'REJECTED_WRONG_MACHINE'
                : 'APPROVED';
 
@@ -84,7 +79,8 @@ router.post('/face', async (req, res) => {
     matched ? best.operator_id : 'UNKNOWN',
     result,
     matched ? Math.round(best.score * 100) : 0,
-    matched ? assignmentMsg : 'No operator profile matched the face scan',
+    wrongProfile ? `Face matched ${best.operator_id}, but ${claimedId} was selected`
+      : matched ? assignmentMsg : 'No operator profile matched the face scan',
   );
 
   // Step 5: Create session if approved
@@ -144,6 +140,7 @@ router.post('/face', async (req, res) => {
     vision_description: visionRaw,
     all_scores:        scores.map(s => ({ operator_id: s.operator_id, name: s.name, score: Math.round(s.score * 100) })),
     message: result === 'APPROVED'              ? `Welcome, ${best.name}. Machine ${machine_id} unlocked.`
+           : result === 'REJECTED_PROFILE_MISMATCH' ? `Face matches ${best.name}, not the selected driver profile. Select the right profile or ask a supervisor.`
            : result === 'REJECTED_WRONG_MACHINE' ? `Access denied. ${best.name} is not authorised for ${machine_id}.`
            : 'Access denied. Face not recognised. Supervisor alerted.',
   });

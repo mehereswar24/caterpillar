@@ -1,4 +1,5 @@
 // API base configuration for driver-side
+import { kbAnswer } from './services/kb';
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export async function fetchWithFallback(endpoint, options = {}, fallbackData = null) {
@@ -27,27 +28,23 @@ export async function getOperators() {
 }
 
 // Face Auth
-export async function authenticateFace(imageBase64, machineId) {
-  const fallback = {
-    approved: true,
-    result: 'APPROVED',
-    match_score: 88,
-    machine_id: machineId,
-    operator: { id: 'OP001', name: 'Rajan Kumar', skill: 'expert', assigned_machines: `${machineId},EXC002` },
-    assignment_valid: true,
-    message: `Biometrics verified. Machine ${machineId} unlocked for Rajan Kumar.`,
-  };
-
+// Fails closed: any error (server down, vision model down, bad image) is a denial, never an approval.
+export async function authenticateFace(imageBase64, machineId, operatorId) {
   try {
     const res = await fetch(`${API_BASE}/api/auth/face`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageBase64 || 'demo', machine_id: machineId }),
+      body: JSON.stringify({ image: imageBase64, machine_id: machineId, operator_id: operatorId }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const data = await res.json().catch(() => null);
+    if (data && typeof data.approved === 'boolean') return data;   // includes the server's own denials (400/503 bodies)
+    throw new Error(`HTTP ${res.status}`);
   } catch (e) {
-    return fallback;
+    return {
+      approved: false,
+      result: 'ERROR',
+      message: `Cannot reach the authentication server (${e.message}). Machine stays locked — ask a supervisor for an override.`,
+    };
   }
 }
 
@@ -111,13 +108,59 @@ export async function askVoiceAssistant(question, context = {}) {
     }
   } catch (err) {}
 
-  // Contextual offline heuristic match
-  const lower = question.toLowerCase();
-  for (const item of fallbackAnswers) {
-    if (item.keywords.some(k => lower.includes(k))) {
-      return item.answer;
-    }
-  }
+  // The LLM was unreachable or too slow: answer straight from the manuals (same knowledge base the server uses)
+  const fromKb = kbAnswer(question);
+  if (fromKb) return fromKb;
 
-  return `CAT SmartOperator Voice: Acknowledged "${question}". Machine telemetry nominal. Keep hydraulic pressure within 34,300 kPa and adhere to designated exclusion zones.`;
+  return "I couldn't find that in the CAT 320 manuals. Try asking about specs, maintenance intervals, troubleshooting, safety or emergency procedures.";
+}
+
+// Learning Hub — training modules (server route: /api/training). Falls back to local data + localStorage progress.
+const LOCAL_MODULES = [
+  { id: 'm1', title: 'Proximity Safety Protocol', type: 'simulation', duration_min: 30, severity: 'critical', reason: 'Prevent worker proximity breaches in exclusion zone' },
+  { id: 'm2', title: 'Seatbelt & PPE Compliance', type: 'video', duration_min: 20, severity: 'critical', reason: 'Seatbelt must be fastened at all times when engine is running' },
+  { id: 'm3', title: 'Fuel Efficiency Techniques', type: 'instructor', duration_min: 45, severity: 'medium', reason: 'Reduce idle time and optimise fuel consumption per shift' },
+  { id: 'm4', title: 'Slope & Stability Awareness', type: 'simulation', duration_min: 40, severity: 'high', reason: 'Safe operation on grades above 10 degrees' },
+  { id: 'm5', title: 'Engine & Hydraulics Basics', type: 'video', duration_min: 60, severity: 'low', reason: 'General mechanical knowledge for CAT 320 operators' },
+  { id: 'm6', title: 'Task Time Optimisation', type: 'instructor', duration_min: 35, severity: 'low', reason: 'Improve productivity and reduce task overrun' },
+];
+
+function readLocalProgress(operatorId) {
+  try { return JSON.parse(localStorage.getItem(`learning:${operatorId}`)) || {}; } catch { return {}; }
+}
+
+export async function getTrainingModules(operatorId = 'OP001') {
+  try {
+    const res = await fetch(`${API_BASE}/api/training/${operatorId}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data?.modules?.length) return data.modules;
+  } catch (err) {
+    console.warn('[Driver API] training request failed, using local modules:', err.message);
+  }
+  const progress = readLocalProgress(operatorId);
+  return LOCAL_MODULES.map(m => ({
+    ...m,
+    completed: !!progress[m.id],
+    score: progress[m.id]?.score ?? null,
+    completed_at: progress[m.id]?.completed_at ?? null,
+  }));
+}
+
+export async function completeTrainingModule(operatorId = 'OP001', moduleId, score) {
+  try {
+    const progress = readLocalProgress(operatorId);
+    progress[moduleId] = { score, completed_at: new Date().toISOString() };
+    localStorage.setItem(`learning:${operatorId}`, JSON.stringify(progress));
+  } catch {}
+  try {
+    const res = await fetch(`${API_BASE}/api/training/${operatorId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ module_id: moduleId, score }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

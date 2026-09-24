@@ -158,4 +158,49 @@ router.post('/preshift', async (req, res) => {
   }
 });
 
+// ── Live cab-camera monitor (semantic checks) ───────────────────────────────
+// Eyes / yawning / head pose / driver-present are tracked ON-DEVICE by the browser (MediaPipe,
+// ~15 ms) — far faster than a VLM. This route only answers what needs real understanding:
+// seatbelt, phone, hard hat, smoking, eating/drinking.
+//  - compact JSON: ~35 output tokens instead of ~90 (about half the latency)
+//  - "unseen" is an allowed answer so the model doesn't have to guess
+//  - if the model is unavailable we say so (503) — never a fake "all nominal" result
+const CAB_SYSTEM = `You check a machine operator through the cab camera. The operator is the person closest to the camera.
+Reply ONLY with compact JSON:
+{"belt":"on"|"off"|"unseen","phone":bool,"hardhat":"on"|"off","smoking":bool,"eating":bool,"d":"max 6 words"}
+Use "unseen" when it is not visible. Do not guess.`;
+
+const ON_OFF = (v, allowed) => (allowed.includes(v) ? v : allowed[allowed.length - 1]);
+let cabBusy = false;   // one frame at a time — the GPU is shared, queued frames would only add lag
+
+// POST /api/vision/cab  { image: <base64 or data URL JPEG> }
+router.post('/cab', async (req, res) => {
+  const image = String(req.body?.image || '').replace(/^data:image\/\w+;base64,/, '');
+  if (image.length < 200) return res.status(400).json({ ok: false, error: 'No image' });
+  if (cabBusy || require('../gpuPriority').busy()) return res.status(429).json({ ok: false, busy: true, error: 'Previous frame still processing' });
+  cabBusy = true;
+  const t0 = Date.now();
+  try {
+    const resp = await axios.post(`${OLLAMA}/api/generate`, {
+      model: VISION_MODEL, system: CAB_SYSTEM, prompt: 'Check.', images: [image],
+      stream: false, format: 'json', keep_alive: '30m',
+      options: { temperature: 0, num_predict: 90 },   // NB: don't change num_ctx — Ollama reloads the model when it differs
+    }, { timeout: 25000 });
+    const raw = JSON.parse(resp.data.response || '{}');
+    const driver = {
+      seatbelt:  ON_OFF(raw.belt, ['on', 'off', 'unseen']),
+      phone:     raw.phone === true,
+      hardhat:   ON_OFF(raw.hardhat, ['on', 'off']),
+      smoking:   raw.smoking === true,
+      eating:    raw.eating === true,
+      description: String(raw.d || '').slice(0, 80),
+    };
+    res.json({ ok: true, driver, latency_ms: Date.now() - t0, model: VISION_MODEL });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: `Vision model unavailable: ${e.message}` });
+  } finally {
+    cabBusy = false;
+  }
+});
+
 module.exports = router;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Fuel, AlertTriangle, CheckCircle, Clock, Navigation } from 'lucide-react';
+import { Fuel, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function FuelStatusCard({
   fuelPct = 41,
@@ -9,104 +9,103 @@ export default function FuelStatusCard({
   travelTimeMin = 16.8,
   cannotReachFuel = false,
   onAdjustFuel,
+  showControls = false,
+  compact = false,   // slimmer layout for under the radar
 }) {
-  const isCriticalLow = fuelPct <= 15;
-  const isAlerting = cannotReachFuel || isCriticalLow;
-  const isSafe = !isAlerting;
+  const isAlerting = cannotReachFuel || fuelPct <= 15;
+  const buffer = runtimeMin - travelTimeMin;
+
+  const stats = [
+    { label: 'Runtime left', value: `${runtimeMin.toFixed(0)} min`, warn: isAlerting },
+    { label: 'Nearest bunk', value: `${bunkDistKm} km` },
+    { label: 'Travel to bunk', value: `${travelTimeMin.toFixed(0)} min` },
+    { label: 'Buffer', value: `${buffer.toFixed(0)} min`, warn: buffer < 0 || isAlerting },
+  ];
+
+  if (compact) {
+    return (
+      <div className={`rounded-2xl px-4 py-3 border ${isAlerting ? 'bg-red-50 border-red-500/70' : 'bg-[#ffffff] border-[#e6e6e1]'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Fuel size={15} className={isAlerting ? 'text-red-600' : 'text-neutral-900'} />
+            <h3 className="text-xs font-medium text-neutral-600 tracking-wide">Fuel</h3>
+          </div>
+          {isAlerting ? (
+            <span className="text-[11px] font-bold text-red-700 flex items-center gap-1 whitespace-nowrap"><AlertTriangle size={12} /> {cannotReachFuel ? 'Cannot reach bunk' : 'Critically low'}</span>
+          ) : (
+            <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 whitespace-nowrap"><CheckCircle size={12} /> Bunk reachable</span>
+          )}
+        </div>
+        <div className="mt-1.5 flex items-center gap-3">
+          <span className="text-2xl font-bold font-mono text-neutral-900 leading-none">{fuelPct}%</span>
+          <div className="flex-1 h-2 rounded-full bg-[#f0f0ec] overflow-hidden">
+            <div className={`h-full rounded-full transition-all duration-500 ${isAlerting ? 'bg-red-500' : fuelPct < 25 ? 'bg-amber-500' : 'bg-[#FFCD11]'}`} style={{ width: `${Math.min(100, Math.max(0, fuelPct))}%` }} />
+          </div>
+          <span className="text-[11px] text-neutral-500 font-mono whitespace-nowrap">{fuelAvailableL} L</span>
+        </div>
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          {stats.map(s => (
+            <div key={s.label} className="min-w-0">
+              <div className="text-[10px] text-neutral-500 truncate">{s.label}</div>
+              <div className={`text-[13px] font-mono font-bold ${s.warn ? 'text-red-600' : 'text-neutral-900'}`}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+        {showControls && onAdjustFuel && (
+          <input type="range" min="3" max="100" value={fuelPct} onChange={e => onAdjustFuel(parseInt(e.target.value, 10))} title="Demo: fuel level" className="w-full accent-[#FFCD11] h-1.5 cursor-pointer mt-2" />
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className={`rounded-2xl p-4 border transition-all ${
-      isAlerting
-        ? 'bg-red-950/40 border-red-500/80 shadow-lg shadow-red-950/50'
-        : 'bg-[#141414] border-[#292929]'
-    }`}>
-      {/* Title & Badge */}
-      <div className="flex items-center justify-between mb-2">
+    <div className={`rounded-2xl p-4 border ${isAlerting ? 'bg-red-50 border-red-500/70' : 'bg-[#ffffff] border-[#e6e6e1]'}`}>
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Fuel size={17} className={isAlerting ? 'text-red-400' : 'text-[#FFB81C]'} />
-          <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wider">
-            Fuel Reachability Status
-          </h3>
+          <Fuel size={15} className={isAlerting ? 'text-red-600' : 'text-neutral-900'} />
+          <h3 className="text-xs font-medium text-neutral-600 tracking-wide">Fuel</h3>
         </div>
-
-        {/* Immediate verdict badge */}
-        {isSafe ? (
-          <span className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
-            <CheckCircle size={12} /> SAFE TO REACH
+        {isAlerting ? (
+          <span className="text-[11px] font-bold text-red-700 flex items-center gap-1 whitespace-nowrap">
+            <AlertTriangle size={12} /> {cannotReachFuel ? 'Cannot reach bunk' : 'Critically low'}
           </span>
         ) : (
-          <span className="bg-red-600 text-white text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
-            <AlertTriangle size={12} /> {cannotReachFuel ? 'CANNOT REACH FUEL BUNK' : 'CRITICAL LOW FUEL (< 15%)'}
+          <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 whitespace-nowrap">
+            <CheckCircle size={12} /> Bunk reachable
           </span>
         )}
       </div>
 
-      {/* Visual Fuel Bar */}
-      <div className="my-2.5">
-        <div className="flex justify-between items-end mb-1">
-          <span className="text-[11px] text-gray-400">Tank Level (410L Tank)</span>
-          <span className="text-base font-extrabold font-mono text-white">
-            {fuelPct}% <span className="text-xs font-normal text-gray-400">({fuelAvailableL} L)</span>
-          </span>
-        </div>
-        <div className="w-full bg-[#222] rounded-full h-3 overflow-hidden border border-[#333]">
-          <div
-            className={`h-3 rounded-full transition-all duration-500 ${
-              isAlerting
-                ? 'bg-red-500 shadow-[0_0_12px_#ef4444]'
-                : fuelPct < 25
-                ? 'bg-amber-500'
-                : 'bg-[#FFB81C]'
-            }`}
-            style={{ width: `${Math.min(100, Math.max(0, fuelPct))}%` }}
-          />
-        </div>
+      <div className="mt-2 flex items-baseline justify-between">
+        <span className="text-3xl font-bold font-mono text-neutral-900 leading-none">{fuelPct}%</span>
+        <span className="text-xs text-neutral-500 font-mono">{fuelAvailableL} L of 410 L</span>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-[#f0f0ec] overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${isAlerting ? 'bg-red-500' : fuelPct < 25 ? 'bg-amber-500' : 'bg-[#FFCD11]'}`}
+          style={{ width: `${Math.min(100, Math.max(0, fuelPct))}%` }}
+        />
       </div>
 
-      {/* Grid of Key Metrics */}
-      <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-b border-[#242424] font-mono">
-        <div>
-          <span className="text-gray-500 block text-[10px]">Estimated Runtime:</span>
-          <span className={`font-bold ${isAlerting ? 'text-red-400 text-sm' : 'text-white'}`}>
-            {runtimeMin.toFixed(0)} min
-          </span>
-        </div>
-        <div>
-          <span className="text-gray-500 block text-[10px]">Nearest Fuel Bunk:</span>
-          <span className="text-white font-bold">
-            {bunkDistKm} km
-          </span>
-        </div>
-        <div>
-          <span className="text-gray-500 block text-[10px]">Travel Time to Bunk:</span>
-          <span className={`font-bold ${isAlerting ? 'text-amber-300' : 'text-gray-300'}`}>
-            {travelTimeMin.toFixed(1)} min
-          </span>
-        </div>
-        <div>
-          <span className="text-gray-500 block text-[10px]">Reachability Buffer:</span>
-          <span className={`font-bold ${isAlerting ? 'text-red-400' : 'text-emerald-400'}`}>
-            {(runtimeMin - travelTimeMin).toFixed(0)} min
-          </span>
-        </div>
-      </div>
-
-      {/* Quick Test Slider */}
-      {onAdjustFuel && (
-        <div className="mt-2.5 pt-1">
-          <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-            <span>Test Fuel Level:</span>
-            <span className={`font-mono font-bold ${isAlerting ? 'text-red-400' : 'text-[#FFB81C]'}`}>
-              {fuelPct}% {isAlerting ? '(ALERT ACTIVE)' : ''}
-            </span>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
+        {stats.map(s => (
+          <div key={s.label}>
+            <div className="text-[11px] text-neutral-500">{s.label}</div>
+            <div className={`text-sm font-mono font-bold ${s.warn ? 'text-red-600' : 'text-neutral-900'}`}>{s.value}</div>
           </div>
+        ))}
+      </div>
+
+      {showControls && onAdjustFuel && (
+        <div className="mt-3 pt-2 border-t border-[#e6e6e1]">
+          <div className="text-[11px] text-neutral-600 mb-1">Demo: fuel level</div>
           <input
             type="range"
             min="3"
             max="100"
             value={fuelPct}
             onChange={e => onAdjustFuel(parseInt(e.target.value, 10))}
-            className="w-full accent-[#FFB81C] bg-[#222] h-1.5 rounded-lg cursor-pointer"
+            className="w-full accent-[#FFCD11] h-1.5 cursor-pointer"
           />
         </div>
       )}

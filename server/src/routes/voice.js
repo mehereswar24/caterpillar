@@ -8,6 +8,22 @@ const axios  = require('axios');
 const OLLAMA     = process.env.OLLAMA_BASE_URL  || 'http://localhost:11434';
 const TEXT_MODEL = process.env.OLLAMA_TEXT_MODEL || 'qwen2.5:7b';
 
+
+const gpu = require('../gpuPriority');
+const VISION_MODEL = process.env.OLLAMA_VISION_MODEL || 'qwen2.5vl:7b';
+
+// Models to try, best first: the one already in GPU memory, then the other.
+async function modelOrder() {
+  let loaded = [];
+  try {
+    const r = await axios.get(`${OLLAMA}/api/ps`, { timeout: 1500 });
+    loaded = (r.data.models || []).map(m => m.name);
+  } catch { /* Ollama unreachable: fall through to the default order */ }
+  if (loaded.includes(TEXT_MODEL)) return [TEXT_MODEL, VISION_MODEL];
+  if (loaded.includes(VISION_MODEL)) return [VISION_MODEL, TEXT_MODEL];
+  return [TEXT_MODEL, VISION_MODEL];
+}
+
 // ── Embedded Knowledge Base (key excerpts from 8 CAT manuals) ─────────────
 const KB = [
   // Specs
@@ -88,7 +104,7 @@ function buildPrompt(question, hits, opCtx) {
     : '';
   return `You are the CAT Smart Operator voice assistant inside a CAT 320 excavator.
 Answer using ONLY the knowledge base below. Be concise — 2-3 sentences max.
-For safety emergencies start your answer with: SAFETY ALERT.
+Only when the question describes an emergency or immediate danger (fire, rollover, injury, gas strike, overheating in progress) start your answer with: SAFETY ALERT. For routine questions such as specs, intervals or procedures, answer directly without that prefix.
 
 KNOWLEDGE BASE:
 ${context}${opStr}
@@ -109,17 +125,27 @@ router.post('/ask', async (req, res) => {
     const sources = [...new Set(hits.map(h=>h.source))];
 
     let answer = 'Ollama not available — check that Ollama is running with qwen2.5:7b.';
+    let usedModel = TEXT_MODEL;
+    gpu.begin();
     try {
-      const resp = await axios.post(`${OLLAMA}/api/generate`, {
-        model: TEXT_MODEL, prompt, stream: false,
-        options: { temperature: 0.3, num_predict: 150 },
-      }, { timeout: 25000 });
-      answer = resp.data.response?.trim() || answer;
-    } catch (e) {
-      answer = `Ollama unreachable: ${e.message}`;
+      // With one GPU, swapping between the text and vision models costs 10-20 s. Use whichever is resident.
+      for (const model of await modelOrder()) {
+        try {
+          const resp = await axios.post(`${OLLAMA}/api/generate`, {
+            model, prompt, stream: false, keep_alive: '10m',
+            options: { temperature: 0.3, num_predict: 150 },
+          }, { timeout: 30000 });
+          const text = resp.data.response?.trim();
+          if (text) { answer = text; usedModel = model; break; }
+        } catch (e) {
+          answer = `Ollama unreachable: ${e.message}`;
+        }
+      }
+    } finally {
+      gpu.end();
     }
 
-    res.json({ question, answer, sources, model: TEXT_MODEL });
+    res.json({ question, answer, sources, model: usedModel });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
