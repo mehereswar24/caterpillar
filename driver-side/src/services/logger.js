@@ -1,5 +1,5 @@
 // logger.js — In-memory event log (persists across the session)
-export const LOG_CATEGORIES = { TASK:'TASK', SAFETY:'SAFETY', FUEL:'FUEL', SYSTEM:'SYSTEM' };
+export const LOG_CATEGORIES = { TASK:'TASK', SAFETY:'SAFETY', FUEL:'FUEL', SYSTEM:'SYSTEM', ALL:'ALL' };
 export const LOG_SEVERITY   = { INFO:'INFO', WARNING:'WARNING', CRITICAL:'CRITICAL' };
 
 const _log = [];
